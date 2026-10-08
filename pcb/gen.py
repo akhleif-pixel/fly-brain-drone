@@ -264,9 +264,12 @@ for ch in CH:
     stext(f"M{m}", cx + ch["sx"] * 0.0, cy + ch["sy"] * 6.0 * 0 + (6.2 if ch["sy"] > 0 else -6.2), 1.5)
     arc = [(cx + 6.0 * math.cos(t), cy + 6.0 * math.sin(t)) for t in [math.radians(d) for d in range(200, 341, 10)]]
     if ch["sy"] > 0:
-        arc = [(px, 2 * cy - py) for px, py in arc]
-    if ch["spin"] == "CW":
+        arc = [(px, 2 * cy - py) for px, py in arc]     # outer side of the disc; this also flips the turning sense
+    # point the arrow the way the motor spins, seen from above (positive area = counter-clockwise)
+    turn = sum((x1 - cx) * (y2 - cy) - (x2 - cx) * (y1 - cy) for (x1, y1), (x2, y2) in zip(arc, arc[1:]))
+    if (turn > 0) != (ch["spin"] == "CCW"):
         arc = arc[::-1]
+    ch["arc"] = arc
     sline(arc, 0.2)
     ex, ey = arc[-1]; px, py = arc[-2]
     ang = math.atan2(ey - py, ex - px)
