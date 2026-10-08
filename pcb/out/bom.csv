@@ -1,0 +1,11 @@
+Ref,Part,Qty
+Q1-Q4,"IRLB8721 N-MOSFET, TO-220, lying flat metal side down on its drain pad",4
+D1-D4,"1N5819 Schottky, DO-41, stripe on the square pad",4
+R1-R4,"10 kOhm 1/4 W, lying flat, 7.62 mm pitch",4
+C1,"100 uF 16-25 V electrolytic, laid flat pointing backward, + on the square pad",1
+U2,"GY-521 MPU6050 on its 8-pin header, chips up",1
+ESP32,"ESP32-S3 CAM board on two 8 mm printed spacers, wired from the jumper pads",1
+TPS,"TPS63020 3.3 V buck-boost on foam tape under the rear, EN bridged to VIN",1
+M1-M4,"8520 motors through the arm holes, in printed collars",4
+BAT,1S 500 mAh battery in a printed tray under the board,1
+Screws,"2x M2 x 16 mm through tray, board and ESP32 spacer",2

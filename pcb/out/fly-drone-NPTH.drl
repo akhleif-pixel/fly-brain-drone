@@ -1,0 +1,12 @@
+M48
+; Fly-Brain Drone non-plated
+FMAT,2
+METRIC,TZ
+T1C2.200
+%
+G90
+G05
+T1
+X60.000Y85.000
+X60.000Y25.500
+M30

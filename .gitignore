@@ -1,0 +1,18 @@
+# Cloned brain model (large data files)
+brain/Drosophila_brain_model/
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# PlatformIO
+.pio/
+.vscode/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# PCB generator environment
+pcb/.venv/

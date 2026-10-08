@@ -1,0 +1,374 @@
+<title>Fly-Brain Drone Parts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a lab parts manifest. Header summary, then one section per subsystem, each a grid of spec cards (photo, role, spec sheet, link). */
+:root {
+  --bg: #eef1ef;
+  --surface: #ffffff;
+  --ink: #16201b;
+  --muted: #5a6760;
+  --line: #d3dad5;
+  --eye: #b8321f;          /* Drosophila eye red: the one accent */
+  --eye-soft: #f6e3df;
+  --chip: #e3e9e5;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111613; --surface: #19201c; --ink: #e6ece8; --muted: #9aa8a0;
+    --line: #2c3631; --eye: #ff7a63; --eye-soft: #3a211c; --chip: #242d28;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111613; --surface: #19201c; --ink: #e6ece8; --muted: #9aa8a0;
+  --line: #2c3631; --eye: #ff7a63; --eye-soft: #3a211c; --chip: #242d28;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 15px/1.55 var(--font-body);
+  padding-inline: 16px; padding-block: 0 56px;
+}
+.wrap { max-width: 1100px; margin: 0 auto; display: grid; gap: 40px; }
+
+header { padding-top: 40px; display: grid; gap: 18px; }
+.eyebrow {
+  font: 500 12px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--eye);
+}
+h1 {
+  font: 800 clamp(2rem, 5vw, 3.4rem)/1.02 var(--font-display);
+  letter-spacing: -.02em; margin: 0; text-wrap: balance;
+}
+.lede { margin: 0; max-width: 62ch; color: var(--muted); font-size: 1.05rem; }
+
+.summary {
+  display: flex; flex-wrap: wrap; gap: 10px 28px;
+  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  padding-block: 14px;
+}
+.stat { display: grid; gap: 2px; }
+.stat b { font: 600 1.35rem/1.1 var(--font-display); font-variant-numeric: tabular-nums; }
+.stat span { font: 500 11px/1.2 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+.flow {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  font: 500 13px/1.3 var(--font-mono); color: var(--muted);
+}
+.flow .node { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; color: var(--ink); }
+.flow .node.hot { border-color: var(--eye); color: var(--eye); }
+.flow .arrow { color: var(--muted); }
+
+section { display: grid; gap: 16px; }
+.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+h2 { font: 700 1.5rem/1.15 var(--font-display); margin: 0; }
+.sec-head p { margin: 0; color: var(--muted); }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 500px), 1fr)); gap: 16px; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 16px; padding: 16px;
+}
+.photo { width: 150px; aspect-ratio: 1; max-width: 100%; border-radius: 6px; background: #fff; overflow: hidden; border: 1px solid var(--line); }
+.photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.body { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.top { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+h3 { font: 600 1.05rem/1.25 var(--font-body); margin: 0; text-wrap: balance; }
+.price { font: 500 1rem/1 var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 500 11.5px/1 var(--font-mono); background: var(--chip); border-radius: 999px; padding: 5px 9px; }
+.chip.use { background: var(--eye-soft); color: var(--eye); }
+.role { margin: 0; }
+dl.spec {
+  margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px;
+  font: 400 12.5px/1.4 var(--font-mono); border-top: 1px dashed var(--line); padding-top: 10px;
+}
+dl.spec dt { color: var(--muted); }
+dl.spec dd { margin: 0; overflow-wrap: anywhere; }
+.link { font: 500 13px/1 var(--font-body); color: var(--eye); text-decoration: none; justify-self: start; }
+.link:hover, .link:focus-visible { text-decoration: underline; }
+a:focus-visible { outline: 2px solid var(--eye); outline-offset: 2px; border-radius: 2px; }
+.note { font-size: 13px; color: var(--muted); margin: 0; }
+
+.extras { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 12px; }
+.extra { border: 1px dashed var(--line); border-radius: 10px; padding: 14px; display: grid; gap: 4px; }
+.extra b { font-weight: 600; }
+.extra span { color: var(--muted); font-size: 13.5px; }
+
+footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 16px; }
+
+@media (max-width: 560px) {
+  .card { grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding: 12px; }
+  .photo { width: 96px; }
+  dl.spec { grid-column: 1 / -1; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Parts list · ESP32-S3 quadcopter</div>
+    <h1>Fly-Brain Drone Parts</h1>
+    <p class="lede">Every part for a small WiFi drone flown by a fruit fly connectome. The drone streams camera video to a laptop, the simulated fly brain decides what to do, and the drone carries out the command. All parts can be hand-soldered with a regular iron.</p>
+    <div class="summary">
+      <div class="stat"><b>13</b><span>items</span></div>
+      <div class="stat"><b>$43.31</b><span>cart total, Oct 5</span></div>
+      <div class="stat"><b>Free</b><span>shipping (AliExpress Choice)</span></div>
+      <div class="stat"><b>Oct 13–18</b><span>estimated delivery</span></div>
+    </div>
+    <div class="flow" aria-label="How the system fits together">
+      <span class="node">Camera</span><span class="arrow">→ WiFi →</span>
+      <span class="node hot">Laptop: fly brain model</span><span class="arrow">→ WiFi →</span>
+      <span class="node">ESP32-S3</span><span class="arrow">→</span>
+      <span class="node">MOSFETs</span><span class="arrow">→</span>
+      <span class="node">Motors</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-head"><h2>Brain and senses</h2><p>The onboard computer, its eye, and its balance sensor.</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="photo"><img src="img/esp.jpg" alt="ESP32-S3 CAM development board with camera connector and two USB-C ports"></div>
+        <div class="body">
+          <div class="top"><h3>ESP32-S3 CAM board</h3><span class="price">$6.20</span></div>
+          <div class="chips"><span class="chip use">Use 1</span><span class="chip">Buy 1 (board only)</span></div>
+          <p class="role">The drone's onboard computer. Runs the flight stabilizer, streams camera video to the laptop over WiFi, and receives the fly brain's commands: turn, climb, dodge.</p>
+          <dl class="spec">
+            <dt>Chip</dt><dd>ESP32-S3 N16R8, dual-core 240 MHz</dd>
+            <dt>Memory</dt><dd>16 MB flash, 8 MB PSRAM</dd>
+            <dt>Wireless</dt><dd>2.4 GHz WiFi, Bluetooth 5 LE</dd>
+            <dt>Ports</dt><dd>2× USB-C, 24-pin DVP camera connector</dd>
+            <dt>Size</dt><dd>Full dev-board size, roughly 6 × 2.5 cm</dd>
+          </dl>
+          <a class="link" href="https://www.aliexpress.us/item/3256808099197404.html" target="_blank" rel="noopener">View on AliExpress ↗</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="photo"><img src="img/cam.jpg" alt="OV2640 camera modules with orange ribbon cables"></div>
+        <div class="body">
+          <div class="top"><h3>OV2640 camera</h3><span class="price">$4.62</span></div>
+          <div class="chips"><span class="chip use">Use 1</span><span class="chip">66° lens · 21 mm cable</span></div>
+          <p class="role">The drone's eye. Its video feeds the fly brain, which looks for looming objects, sideways motion, and small moving targets.</p>
+          <dl class="spec">
+            <dt>Sensor</dt><dd>2 MP, up to 1600 × 1200</dd>
+            <dt>We stream</dt><dd>160 × 120 to 320 × 240 JPEG, 10–15 fps</dd>
+            <dt>Lens</dt><dd>66° field of view</dd>
+            <dt>Connector</dt><dd>24-pin, 0.5 mm pitch ribbon</dd>
+          </dl>
+          <a class="link" href="https://www.aliexpress.us/item/3256802853835121.html" target="_blank" rel="noopener">View on AliExpress ↗</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="photo"><img src="img/mpu.jpg" alt="Blue GY-521 MPU6050 sensor board with pin headers"></div>
+        <div class="body">
+          <div class="top"><h3>GY-521 MPU6050</h3><span class="price">$1.82</span></div>
+          <div class="chips"><span class="chip use">Use 1</span></div>
+          <p class="role">The balance sensor, doing the job of a fly's halteres. Tells the flight controller how the drone is tilted and turning, hundreds of times per second, so it can stay level.</p>
+          <dl class="spec">
+            <dt>Sensors</dt><dd>3-axis gyroscope + 3-axis accelerometer</dd>
+            <dt>Interface</dt><dd>I²C, address 0x68</dd>
+            <dt>Power</dt><dd>3.3 V from the regulator</dd>
+            <dt>Size</dt><dd>About 21 × 16 mm</dd>
+          </dl>
+          <a class="link" href="https://www.aliexpress.us/item/3256806674446875.html" target="_blank" rel="noopener">View on AliExpress ↗</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Flight</h2><p>What actually lifts the drone.</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="photo"><img src="img/m8520.jpg" alt="Four silver 8520 coreless motors with twisted wires"></div>
+        <div class="body">
+          <div class="top"><h3>8520 coreless motors</h3><span class="price">$8.74</span></div>
+          <div class="chips"><span class="chip use">Use 4</span><span class="chip">2 CW + 2 CCW</span></div>
+          <p class="role">The flight motors. Two spin clockwise and two counter-clockwise so the drone does not spin in circles. Diagonal motors spin the same way.</p>
+          <dl class="spec">
+            <dt>Size</dt><dd>8.5 mm × 20 mm body</dd>
+            <dt>Voltage</dt><dd>3.7 V (1S battery)</dd>
+            <dt>Type</dt><dd>Brushed coreless</dd>
+            <dt>Wire colors</dt><dd>Mark CW and CCW apart; check before mounting</dd>
+          </dl>
+          <a class="link" href="https://www.aliexpress.us/item/2251832623074765.html" target="_blank" rel="noopener">View on AliExpress ↗</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="photo"><img src="img/props.jpg" alt="Four red 55 mm propellers and four small motors"></div>
+        <div class="body">
+          <div class="top"><h3>55 mm props + spare motors</h3><span class="price">$4.06</span></div>
+          <div class="chips"><span class="chip use">Use 4 props</span><span class="chip">4 spare 716 motors</span></div>
+          <p class="role">Bought for the propellers, which go on the 8520 motors. The small 716 motors are spares for bench-testing the circuit, so mistakes don't burn a flight motor.</p>
+          <dl class="spec">
+            <dt>Props</dt><dd>4× 55 mm, 2 CW + 2 CCW</dd>
+            <dt>Motors</dt><dd>4× 7 × 16 mm, 3.7 V</dd>
+            <dt>Fit check</dt><dd>Loose on the shaft: a drop of glue. Tight: open the hole slightly.</dd>
+          </dl>
+          <a class="link" href="https://www.aliexpress.us/item/3256806070356847.html" target="_blank" rel="noopener">View on AliExpress ↗</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Power</h2><p>The battery and the parts that keep its power clean.</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="photo"><img src="img/batt.jpg" alt="Silver 3.7 V 500 mAh lithium battery with red and black leads"></div>
+        <div class="body">
+          <div class="top"><h3>3.7 V 500 mAh battery</h3><span class="price">$5.83</span></div>
+          <div class="chips"><span class="chip use">Use 1</span></div>
+          <p class="role">Powers everything. Motors take it directly; the electronics get it through the buck-boost module. Expect 3–5 minutes of flight per charge.</p>
+          <dl class="spec">
+            <dt>Cells</dt><dd>1S lithium, 4.2 V full, 3.0 V empty</dd>
+            <dt>Capacity</dt><dd>500 mAh</dd>
+            <dt>Size</dt><dd>About 40 × 20 × 7 mm, 3.5 cm leads</dd>
+            <dt>Charging</dt><dd>With our own charger, 500 mA or less</dd>
+          </dl>
+          <a class="link" href="https://www.aliexpress.us/item/3256807521276527.html" target="_blank" rel="noopener">View on AliExpress ↗</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="photo"><img src="img/tps.jpg" alt="Three small black TPS63020 buck-boost boards"></div>
+        <div class="body">
+          <div class="top"><h3>TPS63020 buck-boost, 3.3 V</h3><span class="price">$1.99</span></div>
+          <div class="chips"><span class="chip use">Use 1</span></div>
+          <p class="role">Turns the battery's changing voltage into a steady 3.3 V for the ESP32, camera, and sensor, so the ESP32 does not reset when the motors pull hard.</p>
+          <dl class="spec">
+            <dt>Input</dt><dd>1.8–5.5 V</dd>
+            <dt>Output</dt><dd>Fixed 3.3 V, up to about 2 A</dd>
+            <dt>Wiring</dt><dd>VIN ← battery +, VOUT → ESP32 3V3 pin</dd>
+            <dt>Before use</dt><dd>Measure 3.3 V with a multimeter</dd>
+          </dl>
+          <a class="link" href="https://www.aliexpress.us/item/3256807780715912.html" target="_blank" rel="noopener">View on AliExpress ↗</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="photo"><img src="img/cap.jpg" alt="Assorted black electrolytic capacitors"></div>
+        <div class="body">
+          <div class="top"><h3>100 µF capacitors</h3><span class="price">$1.85</span></div>
+          <div class="chips"><span class="chip use">Use 1–2</span><span class="chip">Buy 20</span></div>
+          <p class="role">A shock absorber for power. Soldered across the battery leads, it smooths the voltage dips when the motors speed up.</p>
+          <dl class="spec">
+            <dt>Rating</dt><dd>100 µF, 16 V electrolytic</dd>
+            <dt>Package</dt><dd>Radial through-hole</dd>
+            <dt>Polarity</dt><dd>Stripe side to battery −</dd>
+          </dl>
+          <a class="link" href="https://www.aliexpress.us/item/3256802338659126.html" target="_blank" rel="noopener">View on AliExpress ↗</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Motor driver circuit</h2><p>One set of these per motor, soldered on the perfboard.</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="photo"><img src="img/irlb.jpg" alt="Two IRLB8721 MOSFETs in TO-220 packages"></div>
+        <div class="body">
+          <div class="top"><h3>IRLB8721 MOSFETs</h3><span class="price">$2.96</span></div>
+          <div class="chips"><span class="chip use">Use 4</span><span class="chip">Buy 10</span></div>
+          <p class="role">Electronic switches. The ESP32 cannot power a motor itself, so each MOSFET switches battery current to one motor, thousands of times a second, to set its speed.</p>
+          <dl class="spec">
+            <dt>Type</dt><dd>N-channel, logic level (works at 3.3 V)</dd>
+            <dt>Rating</dt><dd>30 V, 62 A, about 9 mΩ</dd>
+            <dt>Package</dt><dd>TO-220 through-hole</dd>
+            <dt>Weight tip</dt><dd>Trim legs, snip off the metal tab</dd>
+          </dl>
+          <a class="link" href="https://www.aliexpress.us/item/2251832623373507.html" target="_blank" rel="noopener">View on AliExpress ↗</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="photo"><img src="img/diode.jpg" alt="A row of black 1N5819 diodes with long leads"></div>
+        <div class="body">
+          <div class="top"><h3>1N5819 Schottky diodes</h3><span class="price">$1.32</span></div>
+          <div class="chips"><span class="chip use">Use 4</span><span class="chip">Buy 50</span></div>
+          <p class="role">Protection. A motor sends a voltage spike back when it switches off. The diode across each motor absorbs that spike before it can damage the MOSFET.</p>
+          <dl class="spec">
+            <dt>Rating</dt><dd>1 A, 40 V Schottky</dd>
+            <dt>Package</dt><dd>DO-41 through-hole</dd>
+            <dt>Direction</dt><dd>Striped end to battery +</dd>
+          </dl>
+          <a class="link" href="https://www.aliexpress.us/item/3256801365779334.html" target="_blank" rel="noopener">View on AliExpress ↗</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="photo"><img src="img/res.jpg" alt="Strips of blue metal-film resistors"></div>
+        <div class="body">
+          <div class="top"><h3>10 kΩ resistors</h3><span class="price">$1.14</span></div>
+          <div class="chips"><span class="chip use">Use 4</span><span class="chip">Buy 100</span></div>
+          <p class="role">Keep the motors off while the ESP32 boots. One per MOSFET holds the switch off until the code takes over, so the motors don't twitch when the battery is plugged in.</p>
+          <dl class="spec">
+            <dt>Value</dt><dd>10 kΩ, 1%, ¼ W metal film</dd>
+            <dt>Where</dt><dd>MOSFET gate to ground</dd>
+          </dl>
+          <a class="link" href="https://www.aliexpress.us/item/3256804779630792.html" target="_blank" rel="noopener">View on AliExpress ↗</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Building it</h2><p>What holds it all together.</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="photo"><img src="img/perf.jpg" alt="Stacks of blue double-sided perfboards"></div>
+        <div class="body">
+          <div class="top"><h3>Perfboard, 4 × 6 cm</h3><span class="price">$1.85</span></div>
+          <div class="chips"><span class="chip use">Use 1</span><span class="chip">Buy 5</span></div>
+          <p class="role">The base for the motor driver circuit: 4 MOSFETs, 4 diodes, 4 resistors, and the capacitor. Cut it smaller to save weight; the rest are spares for practice.</p>
+          <dl class="spec">
+            <dt>Size</dt><dd>40 × 60 mm, double-sided</dd>
+            <dt>Holes</dt><dd>2.54 mm pitch</dd>
+            <dt>Cutting</dt><dd>Score along a row of holes, then snap</dd>
+          </dl>
+          <a class="link" href="https://www.aliexpress.us/item/3256806837949674.html" target="_blank" rel="noopener">View on AliExpress ↗</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="photo"><img src="img/wire.jpg" alt="Coils of colored silicone wire"></div>
+        <div class="body">
+          <div class="top"><h3>Silicone wire, 28 AWG</h3><span class="price">$1.43</span></div>
+          <div class="chips"><span class="chip use">Use about 1 m</span><span class="chip">Red · 3 m</span></div>
+          <p class="role">Connects the parts. Silicone insulation stays flexible and doesn't melt under the iron. Keep battery and motor runs short.</p>
+          <dl class="spec">
+            <dt>Gauge</dt><dd>28 AWG</dd>
+            <dt>Length</dt><dd>3 m</dd>
+            <dt>Use for</dt><dd>Signals and short motor leads</dd>
+          </dl>
+          <a class="link" href="https://www.aliexpress.us/item/3256808830945392.html" target="_blank" rel="noopener">View on AliExpress ↗</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Not in the cart</h2><p>Already owned, printed, or borrowed.</p></div>
+    <div class="extras">
+      <div class="extra"><b>Battery charger</b><span>Already owned. Check that it charges at 500 mA or less.</span></div>
+      <div class="extra"><b>3D-printed frame</b><span>Frame, prop guards, camera mount, and battery holder. Keep it light.</span></div>
+      <div class="extra"><b>Soldering iron and solder</b><span>Every part above is through-hole or has large pads.</span></div>
+      <div class="extra"><b>Multimeter</b><span>Check the 3.3 V output before connecting the ESP32. Borrowing one is fine.</span></div>
+      <div class="extra"><b>Tape or zip ties</b><span>To hold the battery to the frame.</span></div>
+    </div>
+  </section>
+
+  <footer>Prices are from the AliExpress cart on October 5, 2026. Individual prices include one-time discounts and can change; the cart total was $43.31 with free shipping. Links open the product listings.</footer>
+</div>

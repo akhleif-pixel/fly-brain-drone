@@ -1,0 +1,944 @@
+<title>Fly-Brain Drone Model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a workbench. 3D stage + parts list, then the build guide, wiring diagram, board maps and wire list, all drawn from one data model. */
+:root {
+  --bg: #eef1ef;
+  --surface: #ffffff;
+  --stage: #e3e8e5;
+  --ink: #16201b;
+  --muted: #5a6760;
+  --line: #d3dad5;
+  --eye: #b8321f;
+  --eye-soft: #f6e3df;
+  --board: #2563a6;
+  --hole: #d7dcdf;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111613; --surface: #19201c; --stage: #0c100e; --ink: #e6ece8; --muted: #9aa8a0;
+    --line: #2c3631; --eye: #ff7a63; --eye-soft: #3a211c; --board: #1f4f86; --hole: #8f9ba3; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111613; --surface: #19201c; --stage: #0c100e; --ink: #e6ece8; --muted: #9aa8a0;
+  --line: #2c3631; --eye: #ff7a63; --eye-soft: #3a211c; --board: #1f4f86; --hole: #8f9ba3; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body); padding-inline: 16px; padding-block: 0 48px; }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 22px; }
+header { padding-top: 32px; display: grid; gap: 10px; }
+.eyebrow { font: 500 12px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--eye); }
+h1 { font: 800 clamp(1.9rem, 4.5vw, 3rem)/1.05 var(--font-display); margin: 0; letter-spacing: -.02em; }
+h2 { margin: 0; font: 700 1.25rem/1.2 var(--font-display); text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); max-width: 70ch; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 24px; font: 500 13px/1.3 var(--font-mono); }
+.facts b { font-weight: 500; color: var(--eye); }
+
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+.stage { position: relative; background: var(--stage); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; aspect-ratio: 4 / 3; max-width: 100%; min-height: 380px; }
+.stage canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.stage canvas:active { cursor: grabbing; }
+.controls { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+button.chip { font: 500 12.5px/1 var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; cursor: pointer; }
+button.chip.primary { border-color: var(--eye); color: var(--eye); }
+button.chip[aria-pressed="true"] { background: var(--eye-soft); color: var(--eye); border-color: var(--eye); }
+button:focus-visible { outline: 2px solid var(--eye); outline-offset: 2px; }
+.info { position: absolute; left: 12px; right: 12px; bottom: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 3px; max-width: 520px; }
+.info b { font-weight: 600; }
+.info .w { font: 500 12px/1.3 var(--font-mono); color: var(--eye); }
+.info p { margin: 0; font-size: 13.5px; color: var(--muted); }
+.gnav { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.gnav .bar { flex: 1; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.gnav .bar i { display: block; height: 100%; background: var(--eye); width: 0; }
+.gnav button { font: 500 12.5px/1 var(--font-body); padding: 7px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+.gnav button.next { background: var(--eye); border-color: var(--eye); color: #fff; }
+
+aside { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: grid; gap: 10px; }
+.total { font: 500 13px/1.4 var(--font-mono); color: var(--muted); }
+.total b { color: var(--ink); font-weight: 600; }
+.plist { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.part { width: 100%; display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; background: none; border: 0; border-radius: 6px; padding: 6px 8px; color: var(--ink); font: 400 14px/1.3 var(--font-body); cursor: pointer; }
+.part:hover { background: var(--bg); }
+.part.on { background: var(--eye-soft); }
+.dot { width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--line); }
+.part .g { font: 400 12px/1 var(--font-mono); color: var(--muted); white-space: nowrap; }
+.sub { font: 500 11px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 10px 8px 2px; }
+.note { margin: 0; font-size: 12.5px; color: var(--muted); }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; }
+.panel > p { margin: 0; color: var(--muted); max-width: 74ch; }
+.steps { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 6px 18px; counter-reset: s; }
+.steps li { counter-increment: s; }
+.steps button { width: 100%; text-align: left; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 8px; background: none; border: 0; border-radius: 6px; padding: 7px 8px; color: var(--ink); cursor: pointer; font: 400 14px/1.35 var(--font-body); }
+.steps button::before { content: counter(s); font: 500 12px/1.6 var(--font-mono); color: var(--eye); }
+.steps button:hover, .steps button.on { background: var(--eye-soft); }
+.steps small { display: block; color: var(--muted); font-size: 12.5px; }
+.diagram { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.diagram svg { display: block; min-width: 760px; width: 100%; height: auto; }
+.maps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+.maps figure { margin: 0; display: grid; gap: 6px; }
+.maps figcaption { font: 500 13px/1.4 var(--font-body); }
+.maps figcaption span { display: block; color: var(--muted); font-weight: 400; font-size: 12.5px; }
+.maps .diagram svg { min-width: 420px; }
+.table { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 11.5px/1.2 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+td.mono { font-family: var(--font-mono); font-size: 12.5px; white-space: nowrap; }
+.sw { display: inline-block; width: 22px; height: 6px; border-radius: 3px; vertical-align: middle; margin-right: 6px; border: 1px solid var(--line); }
+.warn { border-left: 3px solid var(--eye); padding: 8px 12px; background: var(--eye-soft); border-radius: 0 6px 6px 0; font-size: 13.5px; margin: 0; }
+
+@media (max-width: 860px) { .main { grid-template-columns: minmax(0, 1fr); } .stage { aspect-ratio: 1 / 1; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Concept model · built from the parts cart</div>
+    <h1>Fly-Brain Drone Model</h1>
+    <p class="lede">Every part at its real size, held in place the way you would actually build it: the driver board on four screws, the battery in a printed cage with a strap, the buck-boost on foam tape. Every wire goes from one named pin or hole to another. Press <b>Build guide</b> to assemble it step by step.</p>
+    <div class="facts">
+      <span>Motor to motor <b>95 mm</b></span>
+      <span>Across props <b>~150 mm</b></span>
+      <span>Driver board <b>16 × 14 holes</b>, 41 × 36 mm</span>
+      <span>Weight <b>~65–74 g</b> without guards</span>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="stage" id="stage">
+      <div class="controls">
+        <button type="button" class="chip primary" id="btn-guide" aria-pressed="false">Build guide</button>
+        <button type="button" class="chip" id="btn-board" aria-pressed="false">Board close-up</button>
+        <button type="button" class="chip" id="btn-explode" aria-pressed="false">Exploded</button>
+        <button type="button" class="chip" id="btn-below">From below</button>
+        <button type="button" class="chip" id="btn-spin" aria-pressed="true">Spin props</button>
+        <button type="button" class="chip" id="btn-guards" aria-pressed="false">Guards</button>
+        <button type="button" class="chip" id="btn-reset">Reset</button>
+      </div>
+      <div class="info" id="info">
+        <b id="info-name">Tap any part</b>
+        <span class="w" id="info-weight"></span>
+        <p id="info-role">Drag to rotate, scroll or pinch to zoom. Build guide walks through all the soldering in order.</p>
+        <div class="gnav" id="gnav" hidden>
+          <button type="button" id="g-prev">Back</button>
+          <div class="bar"><i id="g-bar"></i></div>
+          <button type="button" class="next" id="g-next">Next</button>
+        </div>
+      </div>
+    </div>
+    <aside>
+      <h2>Parts on the drone</h2>
+      <div class="total">Estimated <b>65–74 g</b>, <b>69–80 g</b> with guards. Needs roughly twice that in thrust.</div>
+      <ul class="plist" id="parts"></ul>
+      <p class="note">Weights are typical values, not measurements.</p>
+    </aside>
+  </div>
+
+  <section class="panel">
+    <h2>Build guide</h2>
+    <p>Do the steps in this order; each one only needs what came before it. Tap a step to see it in 3D. Holes are named like <b>[N8]</b>: column letter A–P, row 1–14, read on the parts side with the front of the drone at the top.</p>
+    <p class="warn">We only bought red wire. Mark each wire's ground end with a black marker or a strip of tape before soldering; the colors here are only to tell wires apart.</p>
+    <ol class="steps" id="steps"></ol>
+  </section>
+
+  <section class="panel">
+    <h2>How everything connects</h2>
+    <p>Each line is one wire. Pins on the ESP32 are named as printed on the board; J1 is the header with 3V3 at the top, J3 the header with GND at the top. Check them against your board's silkscreen before soldering.</p>
+    <div class="diagram" id="wiring"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Driver board maps</h2>
+    <p>Two views of the same board. The solder side is a mirror image of the parts side, so check which one you are looking at before you solder. Dark rings are holes in use.</p>
+    <div class="maps">
+      <figure><figcaption>Parts side<span>from above, front of drone at the top</span></figcaption><div class="diagram" id="map-top"></div></figure>
+      <figure><figcaption>Solder side<span>from below, mirrored, front still at the top</span></figcaption><div class="diagram" id="map-bot"></div></figure>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Wire list</h2>
+    <p>Lengths are measured along each wire's path in the model, plus 10 mm to strip and solder. Cut them a little long and trim.</p>
+    <div class="table"><table id="wire-table"><thead><tr><th>#</th><th>Wire</th><th>From</th><th>To</th><th>Length</th></tr></thead><tbody></tbody></table></div>
+    <p class="note">Pin choices follow docs/wiring.md: motors on GPIO 21, 47, 14 and 38; MPU6050 on 41, 42 and 40. On some ESP32-S3 camera boards GPIO 38 and 40 also go to an SD card slot. Leave the SD slot empty, or move those two signals to GPIO 1 and 2.</p>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  // =====================================================================
+  // Parts
+  // =====================================================================
+  const LD = -16; // exploded offset for everything on the driver board
+  const PARTS = [
+    { id: 'frame',     sec: 'Airframe',    name: '3D-printed frame',       weight: '10–14 g', color: '#cfd5d9', lift: 0, role: 'Center plate, four arms with motor tubes and feet, a camera mount, two ESP32 posts, four board standoffs and a battery cage with a slotted floor.' },
+    { id: 'motors',    sec: 'Airframe',    name: '8520 motors ×4',         weight: '~16 g',   color: '#b9bec4', lift: 14, role: 'Pressed into the arm tubes. Motors 1 and 3 spin counter-clockwise, 2 and 4 clockwise. CW sets usually have red and blue leads, CCW sets white and black.' },
+    { id: 'props',     sec: 'Airframe',    name: '55 mm props ×4',         weight: '~2 g',    color: '#d0362a', lift: 30, role: 'Push-fit on the shafts. Each prop must match its motor\'s spin direction.' },
+    { id: 'guards',    sec: 'Airframe',    name: 'Prop guards (optional)', weight: '4–6 g',   color: '#9aa3a8', lift: 40, role: 'Skip them for the first flights to save weight.' },
+    { id: 'esp',       sec: 'Electronics', name: 'ESP32-S3 CAM board',     weight: '8–10 g',  color: '#1f2326', lift: 34, role: 'Hot-glued to two posts above the plate, USB ports at the back so you can still plug in a cable. Wires are soldered straight into its pin holes.' },
+    { id: 'cam',       sec: 'Electronics', name: 'OV2640 camera',          weight: '~1.5 g',  color: '#2a2a2a', lift: 22, z: 14, role: 'Glued to the front mount, tilted up 10°. The ribbon folds back over the top into the board\'s camera connector.' },
+    { id: 'mpu',       sec: 'Electronics', name: 'MPU6050',                weight: '~1.5 g',  color: '#2f4fa8', lift: 18, role: 'On a foam pad at the center of the plate, under the ESP32. Five short wires go up into the ESP32\'s pin holes from below.' },
+    { id: 'tps',       sec: 'Electronics', name: 'TPS63020 buck-boost',    weight: '~1 g',    color: '#1a1c1e', lift: -6, z: -10, role: 'On foam tape under the rear of the plate, between the cage posts. Its EN pad is bridged to VIN so it is always on.' },
+    { id: 'battery',   sec: 'Electronics', name: '500 mAh battery',        weight: '12–13 g', color: '#c9ccc9', lift: -40, role: 'Slides into the cage under the driver board and is held by a velcro strap. Its plug meets the board\'s pigtail at the back; unplug it to switch the drone off.' },
+    { id: 'board',     sec: 'Driver board', name: 'Perfboard 41 × 36 mm',  weight: '~3 g',    color: '#2563a6', lift: LD, role: 'Cut to 16 × 14 holes. Parts on top facing the frame, solder side facing down. Four M2 screws hold it to the standoffs.' },
+    { id: 'mosfets',   sec: 'Driver board', name: 'IRLB8721 MOSFETs ×4',   weight: '5–7 g',   color: '#141516', lift: LD, role: 'Lying flat, tabs cut off. Legs bent down through row 8: gate, drain, source.' },
+    { id: 'resistors', sec: 'Driver board', name: '10 kΩ resistors ×4',    weight: '~1 g',    color: '#4a78b8', lift: LD, role: 'Upright on the gate hole, top leg looped into the source hole. Holds each MOSFET off while the ESP32 boots.' },
+    { id: 'diodes',    sec: 'Driver board', name: '1N5819 diodes ×4',      weight: '~1.5 g',  color: '#2b2b2b', lift: LD, role: 'Drain to battery plus, stripe on the battery plus side. They absorb the spike when a motor switches off.' },
+    { id: 'capacitor', sec: 'Driver board', name: '100 µF capacitor',      weight: '~1 g',    color: '#1c2a3a', lift: LD, role: 'Rear left corner, across ground and battery plus, laid flat toward the back. Striped leg to ground.' },
+    { id: 'solder',    sec: 'Driver board', name: 'Solder joints and buses', weight: '~1 g',  color: '#c9ced3', lift: LD, role: 'Bare tinned wire for the ground bus (row 14) and battery plus bus (row 1 and column A), solder trails for each channel.' },
+    { id: 'wires',     sec: 'Driver board', name: 'Wires',                 weight: '~3 g',    color: '#c0392b', lift: 0, role: 'Battery pigtail, motor leads, four gate wires, buck-boost in and out, and five MPU6050 wires.' }
+  ];
+  const byId = Object.fromEntries(PARTS.map(p => [p.id, p]));
+
+  // =====================================================================
+  // Scene
+  // =====================================================================
+  const stageEl = document.getElementById('stage');
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  stageEl.insertBefore(renderer.domElement, stageEl.firstChild);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(35, 4 / 3, 0.5, 2000);
+  const V = (px, py, pz, tx, ty, tz) => ({ pos: new THREE.Vector3(px, py, pz), target: new THREE.Vector3(tx, ty, tz) });
+  const HOME = V(150, 115, 190, 0, -2, 0);
+  camera.position.copy(HOME.pos);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.target.copy(HOME.target);
+  controls.enableDamping = true; controls.minDistance = 20; controls.maxDistance = 600;
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a9590, 0.7));
+  const L1 = new THREE.DirectionalLight(0xffffff, 0.75); L1.position.set(120, 200, 140); scene.add(L1);
+  const L2 = new THREE.DirectionalLight(0xffffff, 0.45); L2.position.set(-60, -160, 80); scene.add(L2);
+  const L3 = new THREE.DirectionalLight(0xffffff, 0.3); L3.position.set(-150, 60, -120); scene.add(L3);
+  const grid = new THREE.GridHelper(400, 40, 0x7f8a85, 0x9aa49f);
+  grid.position.y = -24.2; grid.material.transparent = true; grid.material.opacity = 0.2; scene.add(grid);
+  function applyTheme() { renderer.setClearColor(new THREE.Color(css('--stage') || '#e3e8e5')); }
+  applyTheme();
+  try {
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+    new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  } catch (e) {}
+
+  // =====================================================================
+  // Builders. Every mesh gets a part id (for picking) and a step tag (for the guide).
+  // =====================================================================
+  let TAG = 'base';
+  const groups = {}, pickables = [], tagged = {}, stepLabels = {};
+  function group(id) { const g = new THREE.Group(); g.userData.part = id; groups[id] = g; scene.add(g); return g; }
+  function mat(color, o) { return new THREE.MeshStandardMaterial(Object.assign({ color: new THREE.Color(color), roughness: 0.6, metalness: 0.05 }, o || {})); }
+  function reg(g, m) { m.userData.part = g.userData.part; m.userData.tag = TAG; g.add(m); pickables.push(m); (tagged[TAG] = tagged[TAG] || []).push(m); return m; }
+  function add(g, geo, material, x, y, z) { const m = new THREE.Mesh(geo, material); m.position.set(x || 0, y || 0, z || 0); return reg(g, m); }
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const cyl = (r, h, seg) => new THREE.CylinderGeometry(r, r, h, seg || 20);
+  const UP = new THREE.Vector3(0, 1, 0);
+  function rod(g, a, b, r, material) {
+    const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = B.clone().sub(A), len = d.length();
+    if (len < 0.01) return null;
+    const m = new THREE.Mesh(cyl(r, len, 8), material);
+    m.position.copy(A).add(B).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(UP, d.normalize());
+    return reg(g, m);
+  }
+  function poly(g, pts, r, material) {
+    for (let i = 0; i < pts.length - 1; i++) rod(g, pts[i], pts[i + 1], r, material);
+    for (let i = 1; i < pts.length - 1; i++) add(g, new THREE.SphereGeometry(r, 8, 6), material, ...pts[i]);
+  }
+  const WIRES = [];
+  function wire(g, pts, r, material, meta) {
+    const curve = new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p)), false, 'centripetal');
+    reg(g, new THREE.Mesh(new THREE.TubeGeometry(curve, 64, r, 7, false), material));
+    if (meta) WIRES.push(Object.assign({ len: Math.ceil((curve.getLength() + 10) / 5) * 5, step: TAG }, meta));
+  }
+  function tex(w, h, draw) {
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    draw(c.getContext('2d'), w, h);
+    const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+  }
+  function faceMats(base, face, map, o) { const s = mat(base, o), arr = [s, s, s, s, s, s]; arr[face] = mat('#ffffff', Object.assign({}, o || {}, { map })); return arr; }
+  const dm = new THREE.Object3D();
+  const labels = new THREE.Group(); scene.add(labels);
+  function sprite(text, x, y, z, accent) {
+    const t = tex(640, 96, (c, w) => {
+      c.font = '500 38px "IBM Plex Mono", ui-monospace, monospace';
+      const tw = Math.min(w - 8, c.measureText(text).width + 36), x0 = (w - tw) / 2;
+      c.fillStyle = accent ? 'rgba(184,50,31,0.94)' : 'rgba(18,24,21,0.88)';
+      c.beginPath(); if (c.roundRect) c.roundRect(x0, 14, tw, 68, 34); else c.rect(x0, 14, tw, 68); c.fill();
+      c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(text, w / 2, 49);
+    });
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true }));
+    s.scale.set(17, 2.55, 1); s.position.set(x, y, z); s.renderOrder = 30; s.visible = false; labels.add(s);
+    (stepLabels[TAG] = stepLabels[TAG] || []).push(s);
+    return s;
+  }
+
+  // =====================================================================
+  // Geometry constants
+  // =====================================================================
+  // Drone faces +z. Seen from above with the front at the top, +x is on the LEFT, so the drone's right side is -x.
+  const R = 47.5 / Math.SQRT2;
+  const MOTORS = {
+    1: { x: -R, z: R,  where: 'front right', dir: 'CCW', pos: 'white', neg: 'black' },
+    2: { x: -R, z: -R, where: 'rear right',  dir: 'CW',  pos: 'red',   neg: 'blue' },
+    3: { x: R,  z: -R, where: 'rear left',   dir: 'CCW', pos: 'white', neg: 'black' },
+    4: { x: R,  z: R,  where: 'front left',  dir: 'CW',  pos: 'red',   neg: 'blue' }
+  };
+  const PLATE_TOP = 1.5, PLATE_BOT = -1.5;
+  const P = 2.54, COLS = 16, ROWS = 14;
+  const BY = -9.3, Y_TOP = BY + 0.8, Y_SOL = BY - 0.8;
+  const hx = i => (i - 7.5) * P, hz = j => (j - 6.5) * P;
+  const LET = 'ABCDEFGHIJKLMNOP';
+  const hn = (i, j) => '[' + LET[15 - i] + (14 - j) + ']';
+  const ESP_Y = 9.5, ESP_TOP = ESP_Y + 0.8, ESP_BOT = ESP_Y - 0.8;
+  const J1 = ['3V3', '3V3', 'RST', '4', '5', '6', '7', '15', '16', '17', '18', '8', '3', '46', '9', '10', '11', '12', '13', '14', '5V', 'GND'];
+  const J3 = ['GND', 'TX', 'RX', '1', '2', '42', '41', '40', '39', '38', '37', '36', '35', '0', '45', '48', '47', '21', '20', '19', 'GND', 'GND'];
+  const pinZ = i => 26.67 - 2.54 * i;
+  function espPin(header, idx) { return { x: header === 'J1' ? 11.43 : -11.43, z: pinZ(idx), name: header + ' ' + (header === 'J1' ? J1 : J3)[idx] }; }
+  const BAT = { y: -17.7, w: 20, h: 7, l: 40 };
+  const TPS = { x: 0, y: -3.3, z: -25.5 };
+  const tpsPad = { VIN: [-8.4, -28.2], GNDin: [-8.4, -22.8], GNDout: [8.4, -28.2], VOUT: [8.4, -22.8], EN: [-3, -30.4], PS: [1, -30.4] };
+  const MPU = { x: 0, y: 3.3, z: 1, w: 21, d: 16 };
+  const mpuPinNames = ['VCC', 'GND', 'SCL', 'SDA', 'XDA', 'XCL', 'AD0', 'INT'];
+  const mpuPin = i => [8.89 - 2.54 * i, MPU.y + 0.8, MPU.z + MPU.d / 2 - 1.27];
+
+  // =====================================================================
+  // BASE: frame, motors, props, guards, ESP32, camera, MPU, TPS body, battery body
+  // =====================================================================
+  TAG = 'base';
+  const gFrame = group('frame');
+  const frameMat = mat(byId.frame.color, { roughness: 0.82 });
+  add(gFrame, box(38, 3, 64), frameMat, 0, 0, 0);
+  Object.values(MOTORS).forEach(m => {
+    const arm = add(gFrame, box(5, 3.5, 39.5), frameMat, m.x / 2, 0, m.z / 2); arm.rotation.y = Math.atan2(m.x, m.z);
+    add(gFrame, cyl(6.2, 12, 28), frameMat, m.x, 0, m.z);
+    add(gFrame, cyl(1.6, 18, 10), frameMat, m.x, -15.1, m.z);
+    add(gFrame, new THREE.SphereGeometry(2.1, 12, 8), mat('#2b2e30', { roughness: 0.95 }), m.x, -24.1 + 2.1 * 0.5, m.z).scale.set(1, 0.5, 1);
+  });
+  [[0, -22], [0, 22]].forEach(([x, z]) => add(gFrame, cyl(1.8, ESP_BOT - PLATE_TOP, 12), frameMat, x, (ESP_BOT + PLATE_TOP) / 2, z));
+  const cmount = add(gFrame, box(12, 10, 3), frameMat, 0, 6.5, 32.5); cmount.rotation.x = -0.17;
+  // battery cage: four posts down to a slotted floor
+  const CAGE_X = 11.6, CAGE_Z = 23, FLOOR_Y = BAT.y - BAT.h / 2 - 0.7;
+  [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => add(gFrame, box(2.4, PLATE_BOT - (FLOOR_Y - 0.7), 2.4), frameMat, sx * CAGE_X, (PLATE_BOT + FLOOR_Y - 0.7) / 2, sz * CAGE_Z));
+  add(gFrame, box(2 * CAGE_X + 2.4, 1.4, 2 * CAGE_Z + 2.4), frameMat, 0, FLOOR_Y, 0);
+  [-1, 1].forEach(s => add(gFrame, box(2 * CAGE_X + 2.6, 1.6, 4), mat('#8b9298'), 0, FLOOR_Y, s * 9));
+
+  const gMotors = group('motors');
+  const motorMat = mat(byId.motors.color, { metalness: 0.75, roughness: 0.28 });
+  Object.values(MOTORS).forEach(m => {
+    add(gMotors, cyl(4.25, 20, 28), motorMat, m.x, 5, m.z);
+    add(gMotors, cyl(4.3, 1.2, 28), mat('#6d7378', { metalness: 0.5, roughness: 0.4 }), m.x, 15.4, m.z);
+    add(gMotors, cyl(0.45, 4, 8), mat('#dfe3e6', { metalness: 0.9, roughness: 0.2 }), m.x, 17.5, m.z);
+  });
+  const gProps = group('props');
+  const propMat = mat(byId.props.color, { roughness: 0.45 });
+  const spinners = [];
+  Object.values(MOTORS).forEach(m => {
+    const ccw = m.dir === 'CCW', p = new THREE.Group(); p.position.set(m.x, 19, m.z); p.userData.dir = ccw ? 1 : -1;
+    const hub = new THREE.Mesh(cyl(2.2, 3.2, 16), propMat); hub.userData.part = 'props'; hub.userData.tag = 'base'; p.add(hub); pickables.push(hub); tagged.base.push(hub);
+    [0, Math.PI].forEach(a => {
+      const h = new THREE.Group(); h.rotation.y = a;
+      const b = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 10), propMat);
+      b.scale.set(12.6, 0.45, 2.9); b.position.x = 14; b.rotation.x = (ccw ? 1 : -1) * 0.28;
+      b.userData.part = 'props'; b.userData.tag = 'base'; h.add(b); pickables.push(b); tagged.base.push(b); p.add(h);
+    });
+    gProps.add(p); spinners.push(p);
+  });
+  const gGuards = group('guards');
+  const guardMat = mat(byId.guards.color, { roughness: 0.7 });
+  Object.values(MOTORS).forEach(m => {
+    const ring = add(gGuards, new THREE.TorusGeometry(30, 0.9, 8, 64), guardMat, m.x, 19, m.z); ring.rotation.x = Math.PI / 2;
+    const ang = Math.atan2(m.z, m.x);
+    [ang, ang + Math.PI / 2, ang - Math.PI / 2].forEach(a => { const s = add(gGuards, box(24, 1.2, 1.6), guardMat, m.x + Math.cos(a) * 18, 12, m.z + Math.sin(a) * 18); s.rotation.y = -a; });
+  });
+  gGuards.visible = false;
+
+  // ESP32 board. Top face texture: canvas top = -z (rear), canvas left = -x.
+  const gEsp = group('esp');
+  const espTex = tex(256, 614, (c, w, h) => {
+    const X = x => (x + 12.5) * 10.24, Y = z => (z + 30) * 10.24;
+    c.fillStyle = '#16191b'; c.fillRect(0, 0, w, h);
+    c.fillStyle = '#e9ecee'; c.font = '11px monospace';
+    J1.forEach((t, i) => { c.textAlign = 'right'; c.fillText(t, X(11.43) - 12, Y(pinZ(i)) + 4); });
+    J3.forEach((t, i) => { c.textAlign = 'left'; c.fillText(t, X(-11.43) + 12, Y(pinZ(i)) + 4); });
+    c.font = 'bold 15px monospace'; c.textAlign = 'center'; c.fillText('J1', X(11.43), Y(29)); c.fillText('J3', X(-11.43), Y(29));
+    c.save(); c.translate(w / 2, Y(-22)); c.font = 'bold 18px monospace'; c.fillText('ESP32-S3-CAM', 0, 0); c.font = '13px monospace'; c.fillText('N16R8', 0, 18); c.restore();
+  });
+  add(gEsp, box(25, 1.6, 60), faceMats('#16191b', 2, espTex, { roughness: 0.5 }), 0, ESP_Y, 0);
+  const modTex = tex(256, 360, (c, w, h) => {
+    c.fillStyle = '#c9cdd1'; c.fillRect(0, 0, w, h); c.strokeStyle = '#3b4045'; c.lineWidth = 3; c.strokeRect(14, 14, w - 28, h - 28);
+    c.fillStyle = '#3b4045'; c.textAlign = 'center'; c.font = 'bold 22px sans-serif'; c.fillText('ESPRESSIF', w / 2, 200);
+    c.font = '17px monospace'; c.fillText('ESP32-S3-WROOM-1', w / 2, 236); c.fillText('N16R8', w / 2, 262);
+  });
+  add(gEsp, box(18, 3.1, 25.5), faceMats('#c4c8cc', 2, modTex, { metalness: 0.75, roughness: 0.3 }), 0, ESP_TOP + 1.55, 4);
+  add(gEsp, box(18, 0.3, 6), mat('#2c2f33'), 0, ESP_TOP + 0.15, 20);
+  [-5.5, 5.5].forEach(x => add(gEsp, box(9, 3.2, 7.5), mat('#b3b8bd', { metalness: 0.8, roughness: 0.3 }), x, ESP_TOP + 1.6, -26.2));
+  add(gEsp, box(17, 2, 5), mat('#111214'), 0, ESP_TOP + 1, -12);
+  const ring = new THREE.TorusGeometry(0.75, 0.22, 6, 16), gold = mat('#d4b25a', { metalness: 0.85, roughness: 0.3 });
+  ['top', 'bot'].forEach(side => {
+    const im = new THREE.InstancedMesh(ring, gold, 44);
+    for (let s = 0; s < 2; s++) for (let i = 0; i < 22; i++) {
+      dm.position.set(s ? 11.43 : -11.43, side === 'top' ? ESP_TOP + 0.05 : ESP_BOT - 0.05, pinZ(i)); dm.rotation.set(Math.PI / 2, 0, 0); dm.updateMatrix(); im.setMatrixAt(s * 22 + i, dm.matrix);
+    }
+    reg(gEsp, im);
+  });
+
+  // camera: head on the mount, ribbon folds back over the top into the connector at z = -12
+  const gCam = group('cam');
+  const head = new THREE.Group(); head.position.set(0, 7, 34.6); head.rotation.x = -0.17;
+  [[box(8.5, 8.5, 1.2), mat('#1d1d1d'), 0], [cyl(3, 4.5, 24), mat('#2b2b2b', { roughness: 0.3 }), 2.6], [cyl(1.8, 0.4, 24), mat('#4a1515', { metalness: 0.5, roughness: 0.08 }), 5]].forEach(([geo, mt, z], i) => {
+    const m = new THREE.Mesh(geo, mt); if (i) m.rotation.x = Math.PI / 2; m.position.z = z; m.userData.part = 'cam'; m.userData.tag = 'base'; head.add(m); pickables.push(m); tagged.base.push(m);
+  });
+  gCam.add(head);
+
+  // MPU6050 (long edge along x, pins along the front edge)
+  const gMpu = group('mpu');
+  const mpuTex = tex(336, 256, (c, w, h) => {
+    const X = x => (x + 10.5) * 16, Y = z => (z - MPU.z + 8) * 16;
+    c.fillStyle = '#244a9e'; c.fillRect(0, 0, w, h);
+    c.fillStyle = '#111'; c.fillRect(w / 2 - 32, 70, 64, 64);
+    c.fillStyle = '#fff'; c.font = 'bold 24px sans-serif'; c.textAlign = 'center'; c.fillText('GY-521', w / 2, 40);
+    c.font = '12px monospace';
+    mpuPinNames.forEach((t, i) => { const p = mpuPin(i); c.save(); c.translate(X(p[0]) + 4, Y(p[2]) - 14); c.rotate(-Math.PI / 2); c.textAlign = 'left'; c.fillText(t, 0, 0); c.restore(); });
+  });
+  add(gMpu, box(MPU.w, 1, MPU.d), mat('#5c5f58', { roughness: 0.95 }), MPU.x, PLATE_TOP + 0.5, MPU.z);
+  add(gMpu, box(MPU.w, 1.6, MPU.d), faceMats('#244a9e', 2, mpuTex), MPU.x, MPU.y, MPU.z);
+
+  // TPS63020 (parts and pads facing down; label drawn mirrored so it reads correctly from below)
+  const gTps = group('tps');
+  const tpsTex = tex(320, 192, (c, w, h) => {
+    c.translate(w, 0); c.scale(-1, 1);
+    const X = x => (TPS.x - x + 10) * 16, Y = z => (TPS.z + 6 - z) * 16;
+    c.fillStyle = '#141618'; c.fillRect(0, 0, w, h);
+    c.fillStyle = '#e9ecee'; c.textAlign = 'center'; c.font = 'bold 22px monospace'; c.fillText('TPS63020', w / 2, 70); c.font = '16px monospace'; c.fillText('BUCK-BOOST', w / 2, 94);
+    c.font = '14px monospace';
+    Object.entries(tpsPad).forEach(([k, [x, z]]) => { const px = X(x); c.fillText(k.replace(/in|out/, ''), px + (px < w / 2 ? 28 : -28), Y(z) + 5); });
+  });
+  add(gTps, box(20, 1, 12), mat('#7d8288', { roughness: 0.95 }), TPS.x, PLATE_BOT - 0.5, TPS.z);
+  add(gTps, box(20, 1.6, 12), faceMats('#141618', 3, tpsTex), TPS.x, TPS.y, TPS.z);
+  add(gTps, box(5, 3, 5), mat('#4a4d50', { roughness: 0.4 }), TPS.x - 1, TPS.y - 2.3, TPS.z + 1.5);
+  const padMat = mat('#cfd3d6', { metalness: 0.7, roughness: 0.35 });
+  Object.values(tpsPad).forEach(([x, z]) => add(gTps, cyl(1, 0.1, 14), padMat, x, TPS.y - 0.85, z));
+
+  // battery in the cage, strap around cage floor and battery
+  const gBat = group('battery');
+  const batTex = tex(200, 400, (c, w, h) => {
+    c.fillStyle = '#c9ccc9'; c.fillRect(0, 0, w, h); c.fillStyle = '#2a2d2f'; c.textAlign = 'center';
+    c.font = 'bold 26px sans-serif'; c.fillText('3.7V', w / 2, 180); c.fillText('500mAh', w / 2, 214); c.font = '18px monospace'; c.fillText('752035', w / 2, 250);
+  });
+  add(gBat, box(BAT.w, BAT.h, BAT.l), faceMats('#c9ccc9', 3, batTex, { metalness: 0.35, roughness: 0.4 }), 0, BAT.y, 0);
+  add(gBat, box(BAT.w, BAT.h, 1.2), mat('#e9e3d0'), 0, BAT.y, -BAT.l / 2 - 0.4);
+  [-9, 9].forEach(z => {
+    const ty = BAT.y + BAT.h / 2 + 0.4, by = FLOOR_Y - 1.1, hw = BAT.w / 2 + 0.5;
+    add(gBat, box(2 * hw, 0.8, 4), mat('#2b2e30', { roughness: 0.95 }), 0, ty, z);
+    add(gBat, box(2 * CAGE_X + 3.4, 0.8, 4), mat('#2b2e30', { roughness: 0.95 }), 0, by, z);
+    [-1, 1].forEach(s => add(gBat, box(0.8, ty - by, 4), mat('#2b2e30', { roughness: 0.95 }), s * (CAGE_X + 1.6), (ty + by) / 2, z));
+  });
+
+  // =====================================================================
+  // DRIVER BOARD
+  // =====================================================================
+  const STEPS = [];
+  function step(id, title, text, view) { STEPS.push({ id, title, text, view }); TAG = id; }
+  const legMat = mat('#c3c8cc', { metalness: 0.85, roughness: 0.3 });
+  const solderMat = mat('#d4d8dc', { metalness: 0.9, roughness: 0.22 });
+  const jointGeo = new THREE.SphereGeometry(1, 14, 10);
+  const gBoard = group('board'), gFet = group('mosfets'), gRes = group('resistors'), gDio = group('diodes'), gCap = group('capacitor'), gSol = group('solder'), gWires = group('wires');
+  const jointsDone = new Set(), usedHoles = new Map();
+  function joint(i, j, what) {
+    usedHoles.set(i + ',' + j, what || usedHoles.get(i + ',' + j) || '');
+    const k = i + ',' + j; if (jointsDone.has(k)) return; jointsDone.add(k);
+    add(gSol, jointGeo, solderMat, hx(i), Y_SOL - 0.35, hz(j)).scale.set(0.95, 0.62, 0.95);
+    rod(gSol, [hx(i), Y_SOL - 0.2, hz(j)], [hx(i), Y_SOL - 1.15, hz(j)], 0.26, legMat);
+  }
+  const TRACES = [];
+  function trace(i1, j1, i2, j2, kind) {
+    TRACES.push({ i1, j1, i2, j2, kind });
+    rod(gSol, [hx(i1), Y_SOL - 0.45, hz(j1)], [hx(i2), Y_SOL - 0.45, hz(j2)], kind === 'bus' ? 0.5 : 0.42, kind === 'bus' ? mat('#e1e4e7', { metalness: 0.95, roughness: 0.2 }) : solderMat);
+  }
+  const holeLabel = (i, j, text, side, accent) => sprite(text, hx(i), side === 'bot' ? Y_SOL - 3.6 : Y_TOP + 4.2, hz(j), accent);
+  const vSol = V(46, -88, 82, 0, BY, 0), vTop = V(42, 70, 68, 0, BY, 2);
+
+  // step: board
+  step('s-board', 'Cut the perfboard', 'Cut 16 × 14 holes (41 × 36 mm) from the 4 × 6 cm board: score along a row of holes on both sides and snap. Sand the edges. Mark column A on the left and row 1 at the front, seen from the parts side.', vTop);
+  add(gBoard, box(COLS * P, 1.6, ROWS * P), mat(byId.board.color, { roughness: 0.6 }), 0, BY, 0);
+  {
+    const pg = cyl(0.88, 0.08, 16), hg = cyl(0.45, 1.75, 10), hmat = mat('#0b0c0d'), n = COLS * ROWS;
+    const a = new THREE.InstancedMesh(pg, padMat, n), b = new THREE.InstancedMesh(pg, padMat, n), c = new THREE.InstancedMesh(hg, hmat, n);
+    let k = 0;
+    for (let i = 0; i < COLS; i++) for (let j = 0; j < ROWS; j++, k++) {
+      dm.rotation.set(0, 0, 0);
+      dm.position.set(hx(i), Y_TOP + 0.04, hz(j)); dm.updateMatrix(); a.setMatrixAt(k, dm.matrix);
+      dm.position.set(hx(i), Y_SOL - 0.04, hz(j)); dm.updateMatrix(); b.setMatrixAt(k, dm.matrix);
+      dm.position.set(hx(i), BY, hz(j)); dm.updateMatrix(); c.setMatrixAt(k, dm.matrix);
+    }
+    [a, b, c].forEach(m => reg(gBoard, m));
+  }
+  sprite('Column A', hx(15), Y_TOP + 4, hz(6) + 1, true); sprite('Column P', hx(0), Y_TOP + 4, hz(6) + 1, true);
+  sprite('Row 1 · front', 0, Y_TOP + 4, hz(13) + 3, true); sprite('Row 14 · back', 0, Y_TOP + 4, hz(0) - 3, true);
+
+  // step: ground bus
+  step('s-gnd', 'Ground bus', 'On the solder side, lay a bare tinned wire along row 14 from [P14] to [B14] and solder it to every second pad. Leave [A14] free: it belongs to battery plus.', vSol);
+  trace(0, 0, 14, 0, 'bus');
+  for (let i = 0; i <= 14; i += 2) add(gSol, jointGeo, solderMat, hx(i), Y_SOL - 0.4, hz(0)).scale.set(0.85, 0.5, 0.85);
+  holeLabel(7, 0, 'Ground bus · row 14', 'bot', true);
+
+  // step: +BAT bus
+  step('s-bat', 'Battery plus bus', 'Lay a second bare wire along row 1, [A1] to [P1], then a third down column A from [A1] to [A14]. Solder every second pad. Check with a meter that the two buses do not touch.', vSol);
+  trace(0, 13, 15, 13, 'bus'); trace(15, 0, 15, 13, 'bus');
+  for (let i = 0; i <= 15; i += 2) add(gSol, jointGeo, solderMat, hx(i), Y_SOL - 0.4, hz(13)).scale.set(0.85, 0.5, 0.85);
+  for (let j = 1; j <= 12; j += 2) add(gSol, jointGeo, solderMat, hx(15), Y_SOL - 0.4, hz(j)).scale.set(0.85, 0.5, 0.85);
+  holeLabel(7, 13, 'Battery + bus · row 1', 'bot', true); holeLabel(15, 7, 'Battery + · column A', 'bot', true);
+
+  // channels
+  const fetTex = tex(256, 230, (c, w, h) => { c.fillStyle = '#121314'; c.fillRect(0, 0, w, h); c.fillStyle = '#d9dcdf'; c.font = 'bold 30px monospace'; c.textAlign = 'center'; c.fillText('IRLB8721', w / 2, 110); c.font = '22px monospace'; c.fillText('PbF', w / 2, 148); });
+  const fetMats = faceMats('#141516', 2, fetTex, { roughness: 0.5 });
+  const bandColors = ['#7a4a1d', '#141414', '#141414', '#c4261d', '#7a4a1d'];
+  const CH = [
+    { m: 1, gpio: espPin('J3', J3.indexOf('21')), color: '#f2a33a', cname: 'orange' },
+    { m: 2, gpio: espPin('J3', J3.indexOf('47')), color: '#27a7c9', cname: 'cyan' },
+    { m: 3, gpio: espPin('J1', J1.indexOf('14')), color: '#d95c9a', cname: 'pink' },
+    { m: 4, gpio: espPin('J3', J3.indexOf('38')), color: '#8e5bd1', cname: 'purple' }
+  ];
+  const LEAD = 6;
+  CH.forEach((ch, k) => {
+    const G = 4 * k, D = G + 1, S = G + 2, X = G + 3, fwd = k % 2 === 0 ? 1 : -1;
+    const rRow = fwd > 0 ? 4 : 8, gRow = fwd > 0 ? 5 : 7;
+    Object.assign(ch, { G, D, S, X, fwd, rRow, gRow });
+    step('s-ch' + ch.m, 'Motor ' + ch.m + ' channel',
+      'MOSFET flat with its legs in ' + hn(G, LEAD) + ' gate, ' + hn(D, LEAD) + ' drain, ' + hn(S, LEAD) + ' source, metal side down. Resistor upright in ' + hn(G, rRow) + ', top leg into ' + hn(S, rRow) + '. Diode ' + hn(D, 11) + ' to ' + hn(X, 11) + ' with the stripe at ' + hn(X, 11) + '. Solder trails: ' + hn(S, LEAD) + ' to the ground bus, ' + hn(G, LEAD) + ' to ' + hn(G, rRow) + ', ' + hn(D, LEAD) + ' to ' + hn(D, 12) + (X !== 15 ? ', ' + hn(X, 11) + ' to the plus bus.' : '; ' + hn(X, 11) + ' is already on column A.'),
+      vTop);
+    // MOSFET
+    const bodyY = Y_TOP + 0.4 + 2.25, leadY = Y_TOP + 2.4, z0 = hz(LEAD) + fwd * 2.6, zc = z0 + fwd * 4.6;
+    add(gFet, box(10, 4.5, 9.2), fetMats, hx(D), bodyY, zc);
+    add(gFet, box(10, 1.3, 1.6), mat('#c9ced2', { metalness: 0.85, roughness: 0.3 }), hx(D), bodyY - 1.6, zc + fwd * 5.2);
+    [G, D, S].forEach(i => { poly(gFet, [[hx(i), leadY, z0], [hx(i), leadY, hz(LEAD)], [hx(i), Y_SOL - 0.6, hz(LEAD)]], 0.32, legMat); joint(i, LEAD, 'Q' + ch.m + ' ' + (i === G ? 'gate' : i === D ? 'drain' : 'source')); });
+    // resistor
+    const rb = Y_TOP + 0.5, rl = 5.4, rz = hz(rRow);
+    add(gRes, cyl(1.05, rl, 16), mat('#4a78b8', { roughness: 0.45 }), hx(G), rb + rl / 2, rz);
+    [-1.9, -1.2, -0.5, 0.2, 1.9].forEach((dy, b) => add(gRes, cyl(1.09, 0.42, 16), mat(bandColors[b]), hx(G), rb + rl / 2 - dy, rz));
+    rod(gRes, [hx(G), rb, rz], [hx(G), Y_SOL - 0.6, rz], 0.26, legMat);
+    poly(gRes, [[hx(G), rb + rl, rz], [hx(G), rb + rl + 0.7, rz], [hx(G) + 1.2, rb + rl + 0.9, rz], [hx(S), rb + rl + 0.4, rz], [hx(S), Y_SOL - 0.6, rz]], 0.26, legMat);
+    joint(G, rRow, 'R' + ch.m); joint(S, rRow, 'R' + ch.m);
+    // diode
+    const dy = Y_TOP + 1.6;
+    const d = add(gDio, cyl(1.35, 5.2, 16), mat('#1b1b1b', { roughness: 0.4 }), (hx(D) + hx(X)) / 2, dy, hz(11)); d.rotation.z = Math.PI / 2;
+    const st = add(gDio, cyl(1.38, 0.8, 16), mat('#bfc3c6'), (hx(D) + hx(X)) / 2 + (hx(X) > hx(D) ? 1.8 : -1.8), dy, hz(11)); st.rotation.z = Math.PI / 2;
+    [D, X].forEach(i => poly(gDio, [[hx(i) + (i === D ? -0.4 : 0.4), dy, hz(11)], [hx(i), dy, hz(11)], [hx(i), Y_SOL - 0.6, hz(11)]], 0.28, legMat));
+    joint(D, 11, 'D' + ch.m + ' anode'); joint(X, 11, 'D' + ch.m + ' stripe');
+    // solder trails
+    trace(S, 0, S, fwd > 0 ? LEAD : rRow);
+    trace(G, Math.min(LEAD, rRow), G, Math.max(LEAD, rRow));
+    trace(D, LEAD, D, 12);
+    if (X !== 15) trace(X, 11, X, 13);
+    holeLabel(D, LEAD, 'Q' + ch.m + ' · G D S', 'top', true);
+    holeLabel(G, rRow, '10 kΩ', 'top'); holeLabel(X, 11, '1N5819 stripe', 'top');
+    holeLabel(S, 2, 'source → ground', 'bot'); holeLabel(D, 9, 'drain → motor −', 'bot');
+  });
+
+  // step: capacitor
+  step('s-cap', '100 µF capacitor', 'Striped leg (minus) into [B14] on the ground bus, other leg into [A14] on battery plus. Bend it flat so it points backward past the board edge.', V(70, 30, -60, hx(14), Y_TOP, hz(0)));
+  const capY = Y_TOP + 3.3, capZ = hz(0) - 2.4 - 5.5, capX = (hx(14) + hx(15)) / 2;
+  const capTex = tex(256, 128, (c, w, h) => {
+    c.fillStyle = '#1f3550'; c.fillRect(0, 0, w, h); c.fillStyle = '#9fb3c8'; c.fillRect(0, 0, 44, h);
+    c.fillStyle = '#1f3550'; c.font = 'bold 30px sans-serif'; c.fillText('−', 12, 50); c.fillText('−', 12, 104);
+    c.fillStyle = '#d7e0ea'; c.font = '20px sans-serif'; c.fillText('100µF 25V', 70, 72);
+  });
+  const cb = add(gCap, cyl(3, 11, 28), mat('#ffffff', { map: capTex, roughness: 0.35 }), capX, capY, capZ); cb.rotation.x = Math.PI / 2; cb.rotation.y = Math.PI * 0.5;
+  add(gCap, cyl(2.7, 0.4, 24), mat('#aab2ba', { metalness: 0.6, roughness: 0.3 }), capX, capY, capZ - 5.6).rotation.x = Math.PI / 2;
+  [14, 15].forEach(i => { poly(gCap, [[hx(i), capY - 1.2, capZ + 5.5], [hx(i), capY - 1.2, hz(0)], [hx(i), Y_SOL - 0.6, hz(0)]], 0.28, legMat); joint(i, 0, i === 14 ? 'C1 minus' : 'C1 plus'); });
+  holeLabel(14, 0, 'stripe (−) → [B14]', 'top', true);
+
+  // step: battery pigtail + connector
+  step('s-pig', 'Battery pigtail', 'Solder the socket\'s red wire into [A13] (column A, battery plus) and its black wire into [E14] (ground bus). Route red around the right edge of the board and black around the back, clear of the capacitor. The socket sits behind the battery cage.', V(80, -10, -95, 10, -12, -20));
+  const PLUG = { x: 4, y: BAT.y + 1, z: -28.5 };
+  add(gWires, box(5, 3.2, 6), mat('#efece2', { roughness: 0.7 }), PLUG.x, PLUG.y, PLUG.z - 3);
+  add(gWires, box(5.4, 3.6, 5), mat('#f6f4ec', { roughness: 0.7 }), PLUG.x, PLUG.y, PLUG.z + 2.6);
+  const red = mat('#c0392b', { roughness: 0.55 }), black = mat('#1d1f21', { roughness: 0.55 });
+  const pigRoutes = {
+    plus: [[PLUG.x + 1.2, PLUG.y, PLUG.z - 6], [14, -13, -31], [21.6, Y_SOL - 2, -16], [21.6, Y_TOP + 2.6, hz(1) - 0.6], [hx(15), Y_TOP + 1.2, hz(1)]],
+    minus: [[PLUG.x - 1.2, PLUG.y, PLUG.z - 6], [6.5, -14, -27], [9.4, Y_SOL - 2.5, -19.6], [9.2, Y_TOP + 2.6, -18.8], [hx(11), Y_TOP + 1.2, hz(0)]]
+  };
+  [[15, 1, red, 'red', 'plus'], [11, 0, black, 'black', 'minus']].forEach(([i, j, mt, cname, pol]) => {
+    wire(gWires, pigRoutes[pol], 0.5, mt, { color: cname, name: 'Battery pigtail ' + pol, from: 'Battery socket', to: hn(i, j) + (pol === 'plus' ? ' column A' : ' ground bus') });
+    rod(gWires, [hx(i), Y_TOP + 1.2, hz(j)], [hx(i), Y_SOL - 0.6, hz(j)], 0.36, mt); joint(i, j, 'Battery ' + (pol === 'plus' ? '+' : '−'));
+  });
+  [[1, red], [-1, black]].forEach(([o, mt]) => wire(gWires, [[o * 1.2, BAT.y + 1, -BAT.l / 2], [o * 1.2 + 1, BAT.y + 1, -24], [PLUG.x + o * 1.2, PLUG.y, PLUG.z + 5]], 0.45, mt));
+  holeLabel(15, 1, 'red → ' + hn(15, 1), 'top', true); holeLabel(11, 0, 'black → ' + hn(11, 0), 'top', true);
+
+  // step: TPS in
+  step('s-tpsin', 'Buck-boost input', 'Red from [P1] (plus bus) and black from [P14] (ground bus) along the right edge to the buck-boost VIN and GND pads. Bridge EN to VIN with a short wire. Before going on: connect the battery and measure 3.3 V at VOUT.', V(-80, -40, -70, -8, -6, -18));
+  const tpsY = TPS.y - 0.9;
+  [[0, 13, red, 'red', 'VIN', 'plus bus'], [0, 0, black, 'black', 'GNDin', 'ground bus']].forEach(([i, j, mt, cname, pad, bus]) => {
+    const [px, pz] = tpsPad[pad];
+    const pts = [[hx(i), Y_TOP + 1.2, hz(j)], [hx(i) - 0.5, -4, hz(j) + (j ? 1.5 : -1.5)], [-24.5, -4.2, hz(j)]];
+    pts.push([-24.5, -4.4, -17.5], [-9, -5.6, -18], [px, tpsY - 1.2, pz + 1], [px, tpsY - 0.4, pz]);
+    wire(gWires, pts, 0.42, mt, { color: cname, name: 'Buck-boost ' + (pad === 'VIN' ? 'input' : 'ground'), from: hn(i, j) + ' ' + bus, to: 'TPS63020 ' + pad.replace('in', '') });
+    rod(gWires, [hx(i), Y_TOP + 1.2, hz(j)], [hx(i), Y_SOL - 0.6, hz(j)], 0.36, mt); joint(i, j, 'TPS ' + pad.replace('in', ''));
+    add(gWires, new THREE.SphereGeometry(0.8, 10, 8), solderMat, px, tpsY - 0.2, pz);
+  });
+  wire(gWires, [[tpsPad.EN[0], tpsY, tpsPad.EN[1]], [(tpsPad.EN[0] + tpsPad.VIN[0]) / 2, tpsY - 1.2, (tpsPad.EN[1] + tpsPad.VIN[1]) / 2], [tpsPad.VIN[0] + 0.6, tpsY, tpsPad.VIN[1]]], 0.3, red, { color: 'red', name: 'Buck-boost enable', from: 'TPS63020 EN', to: 'TPS63020 VIN' });
+  add(gWires, new THREE.SphereGeometry(0.8, 10, 8), solderMat, tpsPad.EN[0], tpsY - 0.2, tpsPad.EN[1]);
+  sprite('VIN · GND · EN', TPS.x - 6, TPS.y - 5, TPS.z, true);
+
+  // step: mount board
+  step('s-mount', 'Mount the board', 'Parts side up toward the frame. Four M2 nylon screws through [P12], [P4], [H12] and [B4] into the printed standoffs. These holes carry nothing else.', V(90, -55, 85, 0, -5, 0));
+  [[0, 2], [0, 10], [8, 2], [14, 10]].forEach(([i, j]) => {
+    add(gFrame, cyl(1.6, PLATE_BOT - Y_TOP, 12), frameMat, hx(i), (PLATE_BOT + Y_TOP) / 2, hz(j));
+    add(gBoard, cyl(1.7, 0.9, 14), mat('#f2f2ee', { roughness: 0.6 }), hx(i), Y_SOL - 0.45, hz(j));
+    usedHoles.set(i + ',' + j, 'screw');
+  });
+  // standoff meshes belong to this step even though they are frame parts
+  holeLabel(0, 2, 'M2 screw', 'bot'); holeLabel(14, 10, 'M2 screw', 'bot');
+
+  // motor wires
+  CH.forEach(ch => {
+    const m = MOTORS[ch.m], front = m.z > 0, sx = Math.sign(m.x);
+    step('s-mot' + ch.m, 'Motor ' + ch.m + ' wires', 'Motor ' + ch.m + ' (' + m.where + ', ' + m.dir + '): ' + m.pos + ' lead into ' + hn(ch.X, 12) + ' (battery plus), ' + m.neg + ' lead into ' + hn(ch.D, 12) + ' (drain). Run them under the arm and tie them down with a dot of glue.',
+      V(m.x * 2.2, 25, m.z * 2.2 + (front ? 25 : -25), m.x * 0.45, -6, m.z * 0.45));
+    const posMat = mat(m.pos === 'white' ? '#ececec' : '#c0392b'), negMat = mat(m.neg === 'blue' ? '#2c6fc2' : '#1d1f21');
+    [[ch.X, posMat, m.pos, 0.9, 'plus'], [ch.D, negMat, m.neg, -0.9, 'minus']].forEach(([i, mt, cname, o, pol]) => {
+      const pts = [[hx(i), Y_TOP + 1.2, hz(12)], [hx(i), -4.4, hz(12) + 1.6]];
+      if (!front) pts.push([sx * 23, -4.2, hz(12) + 1.5], [sx * 23, -4.2, -10]);
+      pts.push([m.x * 0.5 + o, -3.3, m.z * 0.5], [m.x * 0.8 + o, -3.1, m.z * 0.8], [m.x + o * 0.6, -6.6, m.z + o * 0.3]);
+      wire(gWires, pts, 0.5, mt, { color: cname, name: 'Motor ' + ch.m + ' ' + pol + ' lead', from: 'Motor ' + ch.m + ' (' + m.where + ')', to: hn(i, 12) + (pol === 'plus' ? ' battery plus' : ' drain'), motorLead: true });
+      rod(gWires, [hx(i), Y_TOP + 1.2, hz(12)], [hx(i), Y_SOL - 0.6, hz(12)], 0.36, mt); joint(i, 12, 'M' + ch.m + ' ' + (pol === 'plus' ? '+' : '−'));
+    });
+    holeLabel(ch.X, 12, m.pos + ' +', 'top', true); holeLabel(ch.D, 12, m.neg + ' −', 'top', true);
+  });
+
+  // gate wires
+  CH.forEach(ch => {
+    step('s-gate' + ch.m, 'Gate wire, motor ' + ch.m, 'Thin wire from ' + hn(ch.G, ch.gRow) + ' up past the plate edge into ESP32 pin ' + ch.gpio.name + ' (GPIO ' + ch.gpio.name.split(' ')[1] + '). Solder it on top of the ESP32 board.', V(ch.gpio.x * 7, 55, 60, ch.gpio.x * 0.6, 1, (hz(ch.gRow) + ch.gpio.z) / 2));
+    const p = ch.gpio, gm = mat(ch.color, { roughness: 0.55 }), side = Math.sign(p.x);
+    const startSide = Math.sign(hx(ch.G));
+    const pts = [[hx(ch.G), Y_TOP + 1.2, hz(ch.gRow)], [hx(ch.G), -2.7, hz(ch.gRow)]];
+    if (startSide !== side) pts.push([0, -2.6, hz(ch.gRow)]);
+    pts.push([side * 21.5, -2.4, hz(ch.gRow)], [side * 21.5, 4.5, p.z], [side * 15.5, ESP_TOP + 2.6, p.z], [p.x, ESP_TOP + 1.1, p.z]);
+    wire(gWires, pts, 0.3, gm, { color: ch.cname, name: 'Gate, motor ' + ch.m, from: hn(ch.G, ch.gRow), to: 'ESP32 ' + p.name });
+    rod(gWires, [hx(ch.G), Y_TOP + 1.2, hz(ch.gRow)], [hx(ch.G), Y_SOL - 0.6, hz(ch.gRow)], 0.3, gm); joint(ch.G, ch.gRow, 'gate wire ' + ch.m);
+    add(gWires, new THREE.SphereGeometry(0.75, 10, 8), solderMat, p.x, ESP_TOP + 0.35, p.z);
+    sprite(p.name, p.x, ESP_TOP + 4, p.z, true);
+  });
+
+  // step: ESP power from TPS
+  const p3v3 = espPin('J1', 1), pGnd = espPin('J1', 21);
+  step('s-esppow', 'Power the ESP32', 'Only after you have measured 3.3 V. Red from buck-boost VOUT to ESP32 ' + p3v3.name + ', black from the output GND pad to ESP32 ' + pGnd.name + '. Never connect the battery to the ESP32 directly, and unplug the battery whenever USB is connected.', V(80, 30, -95, 4, 2, -15));
+  [[tpsPad.VOUT, p3v3, red, 'red', 'VOUT'], [tpsPad.GNDout, pGnd, black, 'black', 'GND']].forEach(([[px, pz], pin, mt, cname, pad]) => {
+    wire(gWires, [[px, tpsY, pz], [px + 2.5, tpsY - 1.5, pz - 3], [13, -3.5, -34.5], [14.5, 5, -34], [15.2, ESP_TOP + 2.5, pin.z - 2], [pin.x, ESP_TOP + 1.1, pin.z]], 0.38, mt, { color: cname, name: 'ESP32 ' + (pad === 'VOUT' ? '3.3 V' : 'ground'), from: 'TPS63020 ' + pad, to: 'ESP32 ' + pin.name });
+    add(gWires, new THREE.SphereGeometry(0.8, 10, 8), solderMat, px, tpsY - 0.2, pz);
+    add(gWires, new THREE.SphereGeometry(0.75, 10, 8), solderMat, pin.x, ESP_TOP + 0.35, pin.z);
+  });
+  sprite(p3v3.name + ' · ' + pGnd.name, 11.4, ESP_TOP + 4, -10, true);
+
+  // step: MPU wires (soldered into the ESP32 holes from below)
+  step('s-mpu', 'MPU6050 wires', 'Five short wires from the MPU6050 pins up into the ESP32 holes from below: VCC to J1 3V3, GND to J3 GND, SCL to GPIO 42, SDA to GPIO 41, INT to GPIO 40. XDA, XCL and AD0 stay empty.', V(70, 22, 80, 0, 6, 12));
+  const mpuWires = [[0, espPin('J1', 0), red, 'red'], [1, espPin('J3', 0), black, 'black'], [2, espPin('J3', J3.indexOf('42')), mat('#e2c02c'), 'yellow'], [3, espPin('J3', J3.indexOf('41')), mat('#3aa655'), 'green'], [7, espPin('J3', J3.indexOf('40')), mat('#8d969c'), 'grey']];
+  mpuWires.forEach(([pi, pin, mt, cname]) => {
+    const a = mpuPin(pi);
+    wire(gWires, [[a[0], a[1] + 0.2, a[2]], [a[0], a[1] + 1.8, a[2] + 1.6], [pin.x * 0.85, ESP_BOT - 1.6, pin.z - 1.5], [pin.x, ESP_BOT - 0.9, pin.z]], 0.22, mt, { color: cname, name: 'MPU6050 ' + mpuPinNames[pi], from: 'MPU6050 ' + mpuPinNames[pi], to: 'ESP32 ' + pin.name });
+    add(gWires, new THREE.SphereGeometry(0.55, 10, 8), solderMat, a[0], a[1] + 0.15, a[2]);
+    add(gWires, new THREE.SphereGeometry(0.65, 10, 8), solderMat, pin.x, ESP_BOT - 0.35, pin.z);
+  });
+  sprite('VCC GND SCL SDA … INT', 0, MPU.y + 4, MPU.z + 9, true);
+
+  // step: camera ribbon
+  step('s-cam', 'Camera ribbon', 'Slide the camera ribbon into the connector on top of the ESP32, contacts facing the board, and close the latch. Glue the camera to the front mount, tilted up about 10°.', V(55, 45, 95, 0, 9, 18));
+  wire(gCam, [[0, 3.4, 34.2], [0, 9, 31], [0, ESP_TOP + 3.5, 26], [0, ESP_TOP + 1.2, 10], [0, ESP_TOP + 0.9, -9]], 0.18, mat('#d98a2b', { roughness: 0.5 }), { color: 'orange ribbon', name: 'Camera ribbon', from: 'OV2640 camera', to: 'ESP32 camera connector' });
+  add(gCam, box(17, 1.2, 4), mat('#e6e2d6'), 0, ESP_TOP + 2.4, -12);
+
+  // step: battery and final checks
+  step('s-final', 'Battery in, final checks', 'Slide the battery into the cage, close the velcro strap, plug it into the socket at the back. Props off: check each motor spins the right way (1 and 3 counter-clockwise, 2 and 4 clockwise). If one is wrong, swap its two leads.', HOME);
+
+  // =====================================================================
+  // Selection, guide, controls
+  // =====================================================================
+  const accent = new THREE.Color('#ff5a3c');
+  const stepIndex = Object.fromEntries(STEPS.map((s, i) => [s.id, i]));
+  const allMeshes = [];
+  scene.traverse(o => { if (o.isMesh) { allMeshes.push(o); o.material = Array.isArray(o.material) ? o.material.map(m => m.clone()) : o.material.clone(); } });
+  const mats = o => Array.isArray(o.material) ? o.material : [o.material];
+  let selected = null, hovered = null, boardMode = false, guide = -1;
+  const boardParts = ['board', 'mosfets', 'resistors', 'diodes', 'capacitor', 'solder', 'wires'];
+
+  function paint() {
+    allMeshes.forEach(o => {
+      const tag = o.userData.tag || 'base', part = o.userData.part;
+      let vis = true, ghost = false, glow = part === selected || part === hovered;
+      if (guide >= 0) {
+        if (tag === 'base') { ghost = guide < STEPS.length - 1; }
+        else { const si = stepIndex[tag]; vis = si <= guide; glow = si === guide; }
+        if (part === 'battery' && guide < STEPS.length - 1) vis = false;
+      } else if (boardMode) {
+        ghost = !boardParts.includes(part); if (part === 'battery') vis = false;
+      }
+      o.visible = vis;
+      mats(o).forEach(m => {
+        m.transparent = ghost; m.opacity = ghost ? 0.15 : 1; m.depthWrite = !ghost;
+        m.emissive = glow ? accent : new THREE.Color(0); m.emissiveIntensity = glow ? 0.4 : 0;
+      });
+    });
+    labels.children.forEach(s => { s.visible = false; });
+    if (guide >= 0) (stepLabels[STEPS[guide].id] || []).forEach(s => { s.visible = true; });
+    gGuards.visible = guardsOn && guide < 0 && !boardMode;
+  }
+
+  const infoName = document.getElementById('info-name'), infoWeight = document.getElementById('info-weight'), infoRole = document.getElementById('info-role');
+  const gnav = document.getElementById('gnav'), gbar = document.getElementById('g-bar');
+  function showInfo(id) { const p = byId[id]; if (!p) return; infoName.textContent = p.name; infoWeight.textContent = p.weight; infoRole.textContent = p.role; }
+  function showStep() {
+    const s = STEPS[guide];
+    infoName.textContent = s.title; infoWeight.textContent = 'Step ' + (guide + 1) + ' of ' + STEPS.length; infoRole.textContent = s.text;
+    gbar.style.width = ((guide + 1) / STEPS.length * 100) + '%';
+    document.getElementById('g-prev').disabled = guide === 0;
+    document.getElementById('g-next').textContent = guide === STEPS.length - 1 ? 'Done' : 'Next';
+    document.querySelectorAll('#steps button').forEach((b, i) => b.classList.toggle('on', i === guide));
+  }
+
+  // parts list
+  const listEl = document.getElementById('parts');
+  let lastSec = '';
+  PARTS.forEach(p => {
+    if (p.sec !== lastSec) { const h = document.createElement('li'); h.className = 'sub'; h.textContent = p.sec; listEl.appendChild(h); lastSec = p.sec; }
+    const li = document.createElement('li'), b = document.createElement('button');
+    b.type = 'button'; b.className = 'part'; b.id = 'part-' + p.id;
+    b.innerHTML = '<span class="dot"></span><span></span><span class="g"></span>';
+    b.children[0].style.background = p.color; b.children[1].textContent = p.name; b.children[2].textContent = p.weight;
+    b.addEventListener('click', () => select(selected === p.id ? null : p.id));
+    li.appendChild(b); listEl.appendChild(li);
+  });
+  function select(id) {
+    selected = id;
+    document.querySelectorAll('.part').forEach(el => el.classList.toggle('on', el.id === 'part-' + id));
+    if (id === 'guards' && !guardsOn) setGuards(true);
+    if (id && guide < 0) showInfo(id);
+    paint();
+  }
+
+  // picking
+  const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+  function shown(o) { while (o) { if (!o.visible) return false; o = o.parent; } return true; }
+  function pick(ev) {
+    const r = renderer.domElement.getBoundingClientRect();
+    ptr.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ptr, camera);
+    const hits = ray.intersectObjects(pickables.filter(m => shown(m) && !(m.material && !Array.isArray(m.material) && m.material.transparent && m.material.opacity < 0.5)), false);
+    return hits.length ? hits[0].object.userData.part : null;
+  }
+  renderer.domElement.addEventListener('pointermove', ev => {
+    if (ev.buttons || guide >= 0) return;
+    const id = pick(ev);
+    if (id !== hovered) { hovered = id; paint(); if (id) showInfo(id); else if (selected) showInfo(selected); }
+  });
+  let downAt = null;
+  renderer.domElement.addEventListener('pointerdown', ev => { downAt = [ev.clientX, ev.clientY]; });
+  renderer.domElement.addEventListener('pointerup', ev => {
+    if (!downAt) return; const moved = Math.hypot(ev.clientX - downAt[0], ev.clientY - downAt[1]); downAt = null;
+    if (moved < 5 && guide < 0) select(pick(ev));
+  });
+
+  // camera moves
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let fly = null;
+  function flyTo(v) {
+    if (reduce) { camera.position.copy(v.pos); controls.target.copy(v.target); return; }
+    fly = { p0: camera.position.clone(), t0: controls.target.clone(), p1: v.pos.clone(), t1: v.target.clone(), s: 0 };
+  }
+
+  // buttons
+  const $ = id => document.getElementById(id);
+  const press = (b, on) => b.setAttribute('aria-pressed', String(on));
+  let spin = !reduce, explode = 0, explodeTarget = 0, guardsOn = false;
+  press($('btn-spin'), spin);
+  $('btn-spin').addEventListener('click', () => { spin = !spin; press($('btn-spin'), spin); });
+  function setExplode(on) { explodeTarget = on ? 1 : 0; press($('btn-explode'), on); if (reduce) explode = explodeTarget; }
+  function setGuards(on) { guardsOn = on; press($('btn-guards'), on); paint(); }
+  function setBoard(on) {
+    boardMode = on; press($('btn-board'), on);
+    if (on) { endGuide(true); setExplode(false); flyTo(V(52, -88, 88, 0, BY, 0)); infoName.textContent = 'Driver board close-up'; infoWeight.textContent = 'solder side facing you'; infoRole.textContent = 'Rotate upward to see the parts side. Use the board maps below the model to find each hole.'; }
+    paint();
+  }
+  function startGuide(i) {
+    if (boardMode) { boardMode = false; press($('btn-board'), false); }
+    setExplode(false); spin = false; press($('btn-spin'), false);
+    guide = Math.max(0, Math.min(STEPS.length - 1, i)); press($('btn-guide'), true); gnav.hidden = false;
+    showStep(); paint(); flyTo(STEPS[guide].view);
+  }
+  function endGuide(silent) {
+    if (guide < 0) return; guide = -1; press($('btn-guide'), false); gnav.hidden = true;
+    document.querySelectorAll('#steps button').forEach(b => b.classList.remove('on'));
+    if (!silent) { infoName.textContent = 'Tap any part'; infoWeight.textContent = ''; infoRole.textContent = 'All steps done. Drag to look around, or open the guide again.'; flyTo(HOME); }
+    paint();
+  }
+  $('btn-guide').addEventListener('click', () => guide >= 0 ? endGuide() : startGuide(0));
+  $('g-prev').addEventListener('click', () => startGuide(guide - 1));
+  $('g-next').addEventListener('click', () => guide === STEPS.length - 1 ? endGuide() : startGuide(guide + 1));
+  $('btn-board').addEventListener('click', () => setBoard(!boardMode));
+  $('btn-explode').addEventListener('click', () => { endGuide(true); if (boardMode) setBoard(false); setExplode(!explodeTarget); paint(); });
+  $('btn-guards').addEventListener('click', () => setGuards(!guardsOn));
+  $('btn-below').addEventListener('click', () => flyTo(V(70, -150, 110, 0, -8, 0)));
+  $('btn-reset').addEventListener('click', () => { endGuide(true); if (boardMode) setBoard(false); setExplode(false); flyTo(HOME); paint(); });
+  window.addEventListener('keydown', e => {
+    if (guide < 0 || /input|textarea/i.test(e.target.tagName)) return;
+    if (e.key === 'ArrowRight') startGuide(guide + 1); else if (e.key === 'ArrowLeft') startGuide(guide - 1); else if (e.key === 'Escape') endGuide();
+  });
+
+  // step list
+  const stepsEl = $('steps');
+  STEPS.forEach((s, i) => {
+    const li = document.createElement('li'), b = document.createElement('button');
+    b.type = 'button'; b.innerHTML = '<span><span></span><small></small></span>';
+    b.querySelector('span span').textContent = s.title; b.querySelector('small').textContent = s.text;
+    b.addEventListener('click', () => { startGuide(i); stageEl.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' }); });
+    li.appendChild(b); stepsEl.appendChild(li);
+  });
+
+  // =====================================================================
+  // 2D: wire table, board maps, wiring diagram (all from the same data)
+  // =====================================================================
+  const swatch = { red: '#c0392b', black: '#1d1f21', white: '#ececec', blue: '#2c6fc2', orange: '#f2a33a', cyan: '#27a7c9', pink: '#d95c9a', purple: '#8e5bd1', yellow: '#e2c02c', green: '#3aa655', grey: '#8d969c', 'orange ribbon': '#d98a2b' };
+  const tb = document.querySelector('#wire-table tbody');
+  WIRES.forEach((w, n) => {
+    const tr = document.createElement('tr');
+    const len = w.motorLead ? 'motor lead, trim' : w.len + ' mm';
+    [n + 1, null, w.from, w.to, len].forEach((v, c) => {
+      const td = document.createElement('td');
+      if (c === 1) { const s = document.createElement('span'); s.className = 'sw'; s.style.background = swatch[w.color] || '#999'; td.appendChild(s); td.appendChild(document.createTextNode(w.name + ' (' + w.color + ')')); }
+      else td.textContent = v;
+      if (c === 0 || c === 4) td.className = 'mono';
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+
+  function boardMap(side) {
+    const cell = 26, m = 34, W = m * 2 + cell * 15, H = m * 2 + cell * 13;
+    const cx = i => { const c = 15 - i; return m + (side === 'top' ? c : 15 - c) * cell; };
+    const cy = j => m + (13 - j) * cell;
+    let s = `<svg viewBox="0 0 ${W} ${H + 16}" role="img" aria-label="Driver board, ${side === 'top' ? 'parts side' : 'solder side'}" font-family="IBM Plex Mono, monospace">`;
+    s += `<rect x="${m - 16}" y="${m - 16}" width="${cell * 15 + 32}" height="${cell * 13 + 32}" rx="6" fill="var(--board)"/>`;
+    for (let i = 0; i < 16; i++) s += `<text x="${cx(i)}" y="${m - 22}" font-size="11" text-anchor="middle" fill="var(--muted)">${LET[15 - i]}</text>`;
+    for (let j = 0; j < 14; j++) s += `<text x="${m - 24}" y="${cy(j) + 4}" font-size="11" text-anchor="end" fill="var(--muted)">${14 - j}</text>`;
+    if (side === 'bot') {
+      TRACES.forEach(t => s += `<line x1="${cx(t.i1)}" y1="${cy(t.j1)}" x2="${cx(t.i2)}" y2="${cy(t.j2)}" stroke="#e1e4e7" stroke-width="${t.kind === 'bus' ? 7 : 5}" stroke-linecap="round"/>`);
+    }
+    for (let i = 0; i < 16; i++) for (let j = 0; j < 14; j++) {
+      const u = usedHoles.has(i + ',' + j);
+      s += `<circle cx="${cx(i)}" cy="${cy(j)}" r="${u ? 6.5 : 5}" fill="${u ? '#cfd3d6' : 'var(--hole)'}" stroke="${u ? '#111' : 'none'}" stroke-width="2"><title>${hn(i, j)}${u ? ' · ' + usedHoles.get(i + ',' + j) : ''}</title></circle>`;
+      s += `<circle cx="${cx(i)}" cy="${cy(j)}" r="2" fill="#0b0c0d"/>`;
+    }
+    if (side === 'top') {
+      CH.forEach(ch => {
+        const x1 = Math.min(cx(ch.G), cx(ch.S)) - 13, wq = Math.abs(cx(ch.G) - cx(ch.S)) + 26;
+        const y0 = ch.fwd > 0 ? cy(LEAD) - 12 - 4.6 * cell / P * 2 : cy(LEAD) + 12;
+        const hh = 9.2 / P * cell;
+        s += `<rect x="${x1}" y="${ch.fwd > 0 ? cy(LEAD) - 10 - hh : cy(LEAD) + 10}" width="${wq}" height="${hh}" rx="3" fill="#141516" opacity="0.9"/>`;
+        s += `<text x="${(cx(ch.G) + cx(ch.S)) / 2}" y="${ch.fwd > 0 ? cy(LEAD) - 10 - hh / 2 + 4 : cy(LEAD) + 10 + hh / 2 + 4}" font-size="11" text-anchor="middle" fill="#e6e6e6">Q${ch.m}</text>`;
+        ['G', 'D', 'S'].forEach((t, n) => s += `<text x="${cx(ch.G + n)}" y="${cy(LEAD) + (ch.fwd > 0 ? 18 : -11)}" font-size="9.5" text-anchor="middle" fill="#fff">${t}</text>`);
+        s += `<circle cx="${cx(ch.G)}" cy="${cy(ch.rRow)}" r="7" fill="#4a78b8" stroke="#fff" stroke-width="1"/><path d="M${cx(ch.G)} ${cy(ch.rRow) - 7} Q${(cx(ch.G) + cx(ch.S)) / 2} ${cy(ch.rRow) - 18} ${cx(ch.S)} ${cy(ch.rRow) - 4}" fill="none" stroke="#dfe3e6" stroke-width="1.6"/>`;
+        s += `<rect x="${Math.min(cx(ch.D), cx(ch.X)) + 4}" y="${cy(11) - 6}" width="${Math.abs(cx(ch.D) - cx(ch.X)) - 8}" height="12" rx="3" fill="#1b1b1b"/><rect x="${cx(ch.X) + (cx(ch.X) < cx(ch.D) ? 4 : -9)}" y="${cy(11) - 6}" width="5" height="12" fill="#c7c7c7"/>`;
+        const m2 = MOTORS[ch.m];
+        s += `<circle cx="${cx(ch.X)}" cy="${cy(12)}" r="5" fill="${swatch[m2.pos]}" stroke="#111"/><circle cx="${cx(ch.D)}" cy="${cy(12)}" r="5" fill="${swatch[m2.neg]}" stroke="#111"/>`;
+        s += `<text x="${(cx(ch.X) + cx(ch.D)) / 2}" y="${m - 4}" font-size="10" text-anchor="middle" fill="#fff">to M${ch.m}</text>`;
+        s += `<circle cx="${cx(ch.G)}" cy="${cy(ch.gRow)}" r="5" fill="${ch.color}" stroke="#111"/>`;
+      });
+      s += `<circle cx="${cx(15)}" cy="${cy(1)}" r="5" fill="${swatch.red}" stroke="#111"/><circle cx="${cx(11)}" cy="${cy(0)}" r="5" fill="${swatch.black}" stroke="#fff"/>`;
+      s += `<circle cx="${cx(0)}" cy="${cy(13)}" r="5" fill="${swatch.red}" stroke="#111"/><circle cx="${cx(0)}" cy="${cy(0)}" r="5" fill="${swatch.black}" stroke="#fff"/>`;
+      s += `<rect x="${Math.min(cx(14), cx(15)) - 10}" y="${cy(0) + 9}" width="${Math.abs(cx(15) - cx(14)) + 20}" height="22" rx="4" fill="#1f3550"/><text x="${(cx(14) + cx(15)) / 2}" y="${cy(0) + 24}" font-size="9.5" text-anchor="middle" fill="#fff">100 µF</text>`;
+      [[0, 2], [0, 10], [8, 2], [14, 10]].forEach(([i, j]) => s += `<circle cx="${cx(i)}" cy="${cy(j)}" r="8" fill="none" stroke="#f2f2ee" stroke-width="2" stroke-dasharray="3 2"/>`);
+    }
+    s += `<text x="${W / 2}" y="${H + 10}" font-size="11.5" text-anchor="middle" fill="var(--muted)">front of drone ↑ · ${side === 'top' ? 'colored dots = wire ends, dashed = screw holes' : 'silver = bus wire and solder trails'}</text>`;
+    return s + '</svg>';
+  }
+  $('map-top').innerHTML = boardMap('top');
+  $('map-bot').innerHTML = boardMap('bot');
+
+  // wiring diagram
+  (function diagram() {
+    const mods = {
+      bat:  { x: 20,  y: 30,  w: 160, t: 'Battery', s: '1S 500 mAh', R: ['+', '−'] },
+      drv:  { x: 230, y: 20,  w: 290, t: 'Driver board', s: 'perfboard, 4 channels', L: ['Battery +  [A13]', 'Battery −  [C14]', 'TPS VIN  [P1]', 'TPS GND  [P14]'], R: ['M1 +  [M2]', 'M1 −  [O2]', 'M2 +  [I2]', 'M2 −  [K2]', 'M3 +  [E2]', 'M3 −  [G2]', 'M4 +  [A2]', 'M4 −  [C2]', 'Gate 1  [P9]', 'Gate 2  [L7]', 'Gate 3  [H9]', 'Gate 4  [D7]'] },
+      tps:  { x: 20,  y: 380, w: 160, t: 'TPS63020', s: 'EN bridged to VIN', R: ['VIN', 'GND', 'VOUT', 'GND'] },
+      m1:   { x: 640, y: 20,  w: 150, t: 'Motor 1', s: 'front right · CCW', L: ['white +', 'black −'] },
+      m2:   { x: 640, y: 124, w: 150, t: 'Motor 2', s: 'rear right · CW', L: ['red +', 'blue −'] },
+      m3:   { x: 640, y: 228, w: 150, t: 'Motor 3', s: 'rear left · CCW', L: ['white +', 'black −'] },
+      m4:   { x: 640, y: 332, w: 150, t: 'Motor 4', s: 'front left · CW', L: ['red +', 'blue −'] },
+      esp:  { x: 640, y: 450, w: 200, t: 'ESP32-S3 CAM', s: 'pins as printed', L: ['J3 21', 'J3 47', 'J1 14', 'J3 38', 'J1 3V3', 'J1 GND'], R: ['J1 3V3', 'J3 GND', 'J3 42', 'J3 41', 'J3 40', 'Camera socket'] },
+      mpu:  { x: 920, y: 450, w: 130, t: 'MPU6050', s: 'GY-521', L: ['VCC', 'GND', 'SCL', 'SDA', 'INT'] },
+      cam:  { x: 920, y: 640, w: 130, t: 'OV2640', s: 'camera', L: ['ribbon'] }
+    };
+    const PH = 20, TOP = 44;
+    const pinY = (m, side, n) => m.y + TOP + n * PH + 10;
+    const height = m => TOP + Math.max((m.L || []).length, (m.R || []).length) * PH + 10;
+    const P2 = (k, side, n) => { const m = mods[k]; return { x: side === 'L' ? m.x : m.x + m.w, y: pinY(m, side, n), side }; };
+    const links = [
+      ['bat', 'R', 0, 'drv', 'L', 0, 'red'], ['bat', 'R', 1, 'drv', 'L', 1, 'black'],
+      ['drv', 'L', 2, 'tps', 'R', 0, 'red'], ['drv', 'L', 3, 'tps', 'R', 1, 'black'],
+      ['drv', 'R', 0, 'm1', 'L', 0, 'white'], ['drv', 'R', 1, 'm1', 'L', 1, 'black'],
+      ['drv', 'R', 2, 'm2', 'L', 0, 'red'], ['drv', 'R', 3, 'm2', 'L', 1, 'blue'],
+      ['drv', 'R', 4, 'm3', 'L', 0, 'white'], ['drv', 'R', 5, 'm3', 'L', 1, 'black'],
+      ['drv', 'R', 6, 'm4', 'L', 0, 'red'], ['drv', 'R', 7, 'm4', 'L', 1, 'blue'],
+      ['drv', 'R', 8, 'esp', 'L', 0, 'orange'], ['drv', 'R', 9, 'esp', 'L', 1, 'cyan'], ['drv', 'R', 10, 'esp', 'L', 2, 'pink'], ['drv', 'R', 11, 'esp', 'L', 3, 'purple'],
+      ['tps', 'R', 2, 'esp', 'L', 4, 'red'], ['tps', 'R', 3, 'esp', 'L', 5, 'black'],
+      ['esp', 'R', 0, 'mpu', 'L', 0, 'red'], ['esp', 'R', 1, 'mpu', 'L', 1, 'black'], ['esp', 'R', 2, 'mpu', 'L', 2, 'yellow'], ['esp', 'R', 3, 'mpu', 'L', 3, 'green'], ['esp', 'R', 4, 'mpu', 'L', 4, 'grey'],
+      ['esp', 'R', 5, 'cam', 'L', 0, 'orange ribbon']
+    ];
+    // correct the driver pin labels from the real hole names
+    mods.drv.L = ['Battery +  ' + hn(15, 1), 'Battery −  ' + hn(11, 0), 'TPS VIN  ' + hn(0, 13), 'TPS GND  ' + hn(0, 0)];
+    mods.drv.R = [].concat(...CH.map(ch => ['M' + ch.m + ' +  ' + hn(ch.X, 12), 'M' + ch.m + ' −  ' + hn(ch.D, 12)])).concat(CH.map(ch => 'Gate ' + ch.m + '  ' + hn(ch.G, ch.gRow)));
+    mods.esp.L = CH.map(ch => ch.gpio.name).concat([p3v3.name, pGnd.name]);
+    mods.esp.R = [espPin('J1', 0).name, espPin('J3', 0).name, 'J3 42', 'J3 41', 'J3 40', 'Camera socket'];
+    const Wd = 1070, Hd = 760;
+    let s = `<svg viewBox="0 0 ${Wd} ${Hd}" role="img" aria-label="Wiring diagram of the drone" font-family="IBM Plex Sans, sans-serif">`;
+    links.forEach(([a, as, an, b, bs, bn, col], idx) => {
+      const p = P2(a, as, an), q = P2(b, bs, bn);
+      const o = 14 + (idx % 6) * 5;
+      let d;
+      if (as === 'R' && bs === 'L' && q.x > p.x) { const mx = a === 'drv' ? p.x + 22 + (an % 12) * 7.5 : p.x + (q.x - p.x) / 2 + ((idx % 7) - 3) * 6; d = `M${p.x} ${p.y}H${mx}V${q.y}H${q.x}`; }
+      else if (as === 'L' && bs === 'R') { const mx = q.x + (p.x - q.x) / 2 + ((idx % 5) - 2) * 4; d = `M${p.x} ${p.y}H${mx}V${q.y}H${q.x}`; }
+      else { const mx = Math.min(p.x, q.x) - o; d = `M${p.x} ${p.y}H${mx}V${q.y}H${q.x}`; }
+      const c = swatch[col] || '#999';
+      const wd = col === 'orange ribbon' ? 5 : 2.4;
+      s += `<path d="${d}" fill="none" stroke="var(--muted)" stroke-opacity="0.75" stroke-width="${wd + 1.8}" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${c}" stroke-width="${wd}" stroke-linejoin="round"><title>${col} wire</title></path>`;
+    });
+    Object.values(mods).forEach(m => {
+      const h = height(m);
+      s += `<rect x="${m.x}" y="${m.y}" width="${m.w}" height="${h}" rx="8" fill="var(--surface)" stroke="var(--line)" stroke-width="1.5"/>`;
+      s += `<text x="${m.x + 12}" y="${m.y + 20}" font-size="14" font-weight="600" fill="var(--ink)">${m.t}</text><text x="${m.x + 12}" y="${m.y + 36}" font-size="11.5" fill="var(--muted)">${m.s}</text>`;
+      (m.L || []).forEach((t, n) => s += `<circle cx="${m.x}" cy="${pinY(m, 'L', n)}" r="3.5" fill="var(--ink)"/><text x="${m.x + 10}" y="${pinY(m, 'L', n) + 4}" font-size="11.5" font-family="IBM Plex Mono, monospace" fill="var(--ink)">${t}</text>`);
+      (m.R || []).forEach((t, n) => s += `<circle cx="${m.x + m.w}" cy="${pinY(m, 'R', n)}" r="3.5" fill="var(--ink)"/><text x="${m.x + m.w - 10}" y="${pinY(m, 'R', n) + 4}" font-size="11.5" text-anchor="end" font-family="IBM Plex Mono, monospace" fill="var(--ink)">${t}</text>`);
+    });
+    s += `<text x="20" y="${Hd - 14}" font-size="12" fill="var(--muted)">Inside the driver board each channel is the same: gate → 10 kΩ → source → ground bus; drain → motor −; 1N5819 from drain to battery +; motor + on the battery + bus. 100 µF across the buses.</text>`;
+    $('wiring').innerHTML = s + '</svg>';
+  })();
+
+  // =====================================================================
+  // Loop
+  // =====================================================================
+  function resize() { const w = stageEl.clientWidth, h = stageEl.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+  new ResizeObserver(resize).observe(stageEl); resize();
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min((now - last) / 1000, 0.05); last = now;
+    if (spin) spinners.forEach(p => { p.rotation.y += p.userData.dir * dt * 14; });
+    explode += (explodeTarget - explode) * Math.min(1, dt * 6);
+    PARTS.forEach(p => { const g = groups[p.id]; if (!g || p.id === 'wires') return; g.position.y = (p.lift || 0) * explode; g.position.z = (p.z || 0) * explode; });
+    gWires.visible = explode < 0.12;
+    if (guide >= 0 && !reduce) {
+      const k = 0.25 + 0.2 * Math.sin(now / 220);
+      (tagged[STEPS[guide].id] || []).forEach(o => mats(o).forEach(m => { m.emissiveIntensity = k; }));
+    }
+    if (fly) { fly.s = Math.min(1, fly.s + dt * 1.5); const e = 1 - Math.pow(1 - fly.s, 3); camera.position.lerpVectors(fly.p0, fly.p1, e); controls.target.lerpVectors(fly.t0, fly.t1, e); if (fly.s >= 1) fly = null; }
+    controls.update();
+    renderer.render(scene, camera);
+    requestAnimationFrame(frame);
+  }
+  paint();
+  requestAnimationFrame(frame);
+})();
+</script>
