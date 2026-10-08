@@ -207,17 +207,26 @@ def text_poly(s, x, y, size=1.3, anchor="c", rot=0):
     shape = affinity.rotate(shape, rot, origin=(0, 0))
     return affinity.translate(shape, x, y)
 
+# the same silkscreen is also kept as native primitives for the KiCad export
+K_TEXT, K_LINE, K_FILL = [], [], []
+
 def stext(s, x, y, size=1.3, layer="top", anchor="c", rot=0):
     g = text_poly(s, x, y, size, anchor, rot)
     if g is not None:
         if layer == "bottom":
             g = affinity.scale(g, -1, 1, origin=(x, y))   # read correctly from below
         silk.append((layer, g))
+        K_TEXT.append(dict(s=s, x=x, y=y, size=size, layer=layer, rot=rot))
 
 def sline(pts, w=0.18, layer="top", closed=False):
     if closed:
         pts = list(pts) + [pts[0]]
     silk.append((layer, LineString(pts).buffer(w / 2, RES)))
+    K_LINE.append(dict(pts=list(pts), w=w, layer=layer))
+
+def sfill(poly, layer="top"):
+    silk.append((layer, poly))
+    K_FILL.append(dict(pts=list(poly.exterior.coords)[:-1], layer=layer))
 
 def scircle(x, y, r, w=0.18, layer="top"):
     silk.append((layer, Point(x, y).buffer(r + w / 2, RES).difference(Point(x, y).buffer(r - w / 2, RES))))
@@ -235,7 +244,7 @@ for ch in CH:
     # diode: body + stripe on the cathode end
     sline([uv(ch, 38.2, -2.6), uv(ch, 38.2, 2.6)], 2.4 * 0 + 0.18)
     sline([uv(ch, 37.0, -2.6), uv(ch, 39.4, -2.6), uv(ch, 39.4, 2.6), uv(ch, 37.0, 2.6)], closed=True)
-    silk.append(("top", Polygon([uv(ch, 37.0, 1.9), uv(ch, 39.4, 1.9), uv(ch, 39.4, 2.6), uv(ch, 37.0, 2.6)])))
+    sfill(Polygon([uv(ch, 37.0, 1.9), uv(ch, 39.4, 1.9), uv(ch, 39.4, 2.6), uv(ch, 37.0, 2.6)]))
     stext(f"D{m}", *uv(ch, 40.6, 0), 1.0, rot=rot)
     stext("+", *uv(ch, 35.2, 3.85), 1.4)
     stext("-", *uv(ch, 35.2, -3.85), 1.6)
@@ -261,9 +270,9 @@ for ch in CH:
     sline(arc, 0.2)
     ex, ey = arc[-1]; px, py = arc[-2]
     ang = math.atan2(ey - py, ex - px)
-    silk.append(("top", Polygon([(ex + 0.9 * math.cos(ang), ey + 0.9 * math.sin(ang)),
+    sfill(Polygon([(ex + 0.9 * math.cos(ang), ey + 0.9 * math.sin(ang)),
                                  (ex + 0.9 * math.cos(ang + 2.4), ey + 0.9 * math.sin(ang + 2.4)),
-                                 (ex + 0.9 * math.cos(ang - 2.4), ey + 0.9 * math.sin(ang - 2.4))])))
+                                 (ex + 0.9 * math.cos(ang - 2.4), ey + 0.9 * math.sin(ang - 2.4))]))
     stext(ch["spin"], cx, cy + (-6.2 if ch["sy"] > 0 else 6.2), 1.1)
 
 # MPU outline (body sits in front of the pin row) and pin names
@@ -289,7 +298,7 @@ stext("+", 15.0, -24.8, 1.2); stext("C1", 13.75, -28.6, 0.9)
 # front
 stext("FRONT", 0, 36.5, 1.6)
 sline([(0, 38.4), (0, 39.2)], 0.25)
-silk.append(("top", Polygon([(-1.0, 38.1), (1.0, 38.1), (0, 39.4)])))
+sfill(Polygon([(-1.0, 38.1), (1.0, 38.1), (0, 39.4)]))
 stext("FLY-BRAIN DRONE", 0, -10.0, 1.3)
 stext("rev A", 0, -11.9, 0.9)
 # bottom side: battery, buck-boost, screws
@@ -577,3 +586,10 @@ print(f"Pour islands dropped: top {drop_top:.1f} mm2, bottom {drop_bot:.1f} mm2"
 print("CHECKS PASSED" if OK else "CHECKS FAILED")
 for r in report:
     print("  " + r)
+
+# ---------------------------------------------------------------- KiCad project
+import sys
+sys.path.insert(0, HERE)
+import kicad_export
+kpath, knets = kicad_export.write(globals())
+print(f"KiCad project: {os.path.relpath(kpath, HERE)} ({len(knets)} nets)")

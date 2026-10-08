@@ -9,6 +9,15 @@ The PCB is the drone's frame: an X-shaped, 2-layer board, 83 × 83 mm, about 8.6
 
 Regenerate everything with `pcb/.venv/Scripts/python pcb/gen.py`. It writes `out/`, then prints a clearance, edge, drill and connectivity report. The last run passed all checks, and the netlist matches the design.
 
+## Opening it in KiCad
+
+1. Open `pcb/kicad/fly-drone.kicad_pro` in KiCad 8 or newer. KiCad 10 will offer to upgrade the file; say yes.
+2. Open the PCB editor and press **B** to fill the copper zones (GND on top, VBAT on the bottom, one drain zone under each MOSFET).
+3. Run **Inspect → Design Rules Checker**. "Footprint not in library" warnings are expected: the footprints live only in this board.
+4. To order from KiCad: **File → Fabrication Outputs → Gerbers** and **Drill Files**, then zip them.
+
+There is no schematic yet; the nets are defined on the board. Once you save the board in KiCad, **the KiCad file is the master copy**: `gen.py` will not overwrite it, and the Gerbers in `out/` are only up to date until then.
+
 ## Ordering (JLCPCB or PCBWay)
 
 Upload `out/fly-drone-gerbers.zip` and choose:

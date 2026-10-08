@@ -17,6 +17,14 @@ A small ESP32-S3 camera quadcopter steered by a simulated fruit fly brain (FlyWi
 
 ## Working together
 
-1. Pull before you start: `git pull`
-2. Work on your part, then commit and push: `git add -A`, `git commit -m "what changed"`, `git push`
-3. When a decision changes, update `CLAUDE.md` so both Claudes know.
+**Ayham** works with Claude. **Ahmed** works in KiCad 10 on the PCB frame.
+
+Ahmed, to get the files:
+1. Accept the GitHub invite (email or github.com/notifications).
+2. Install [GitHub Desktop](https://desktop.github.com), sign in, choose **File → Clone repository**, and pick `akhleif-pixel/fly-brain-drone`.
+3. Open `pcb/kicad/fly-drone.kicad_pro` in KiCad. Start with [pcb/README.md](pcb/README.md).
+4. When you've changed something: in GitHub Desktop, write a short summary, click **Commit**, then **Push origin**. Click **Fetch / Pull** before you start work to get Ayham's changes.
+
+Both of you: pull before you start, and push when you're done. Don't edit the same file at the same time; Git will flag a conflict if you do.
+
+When a decision changes, update `CLAUDE.md` so Claude knows.

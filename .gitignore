@@ -16,3 +16,9 @@ Thumbs.db
 
 # PCB generator environment
 pcb/.venv/
+
+# KiCad local files
+*.kicad_prl
+*-backups/
+fp-info-cache
+*.lck
