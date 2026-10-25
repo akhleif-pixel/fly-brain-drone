@@ -100,7 +100,7 @@ def write(G):
         connect = '(connect_pads yes (clearance 0.4))' if solid else '(connect_pads (clearance 0.4))'
         return [f'  (zone (net {NET[net]}) (net_name {q(net)}) (layer {q(layer)}) (uuid {q(U())}) (name {q(net + " " + layer)}) (hatch edge 0.5)',
                 f'    (priority {priority})', f'    {connect}', '    (min_thickness 0.25) (filled_areas_thickness no)',
-                '    (fill yes (thermal_gap 0.35) (thermal_bridge_width 0.45) (island_removal_mode 1) (island_area_min 1))',
+                '    (fill yes (thermal_gap 0.35) (thermal_bridge_width 0.45) (island_removal_mode 0) (island_area_min 1))',
                 f'    (polygon (pts {pts}))', '  )']
     outer = list(BOARD.exterior.coords)[:-1]
     lines += zone("GND", "F.Cu", outer, 0, False)

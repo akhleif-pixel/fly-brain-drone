@@ -210,7 +210,10 @@ def text_poly(s, x, y, size=1.3, anchor="c", rot=0):
 # the same silkscreen is also kept as native primitives for the KiCad export
 K_TEXT, K_LINE, K_FILL = [], [], []
 
+MIN_TEXT = 1.2   # em size; gives about 0.85 mm tall capitals, above the 0.8 mm factory minimum
+
 def stext(s, x, y, size=1.3, layer="top", anchor="c", rot=0):
+    size = max(size, MIN_TEXT)
     g = text_poly(s, x, y, size, anchor, rot)
     if g is not None:
         if layer == "bottom":
@@ -239,7 +242,7 @@ for ch in CH:
     a = math.degrees(math.atan2(ch["sy"], ch["sx"]))
     rot = a - 90 if ch["sy"] > 0 else a + 90
     stext(f"Q{m}", *uv(ch, 28.0, 0), 1.6, rot=rot)
-    stext("METAL SIDE DOWN", *uv(ch, 31.2, 0), 0.9, rot=rot)
+    stext("METAL DOWN", *uv(ch, 31.0, 0), 1.2, rot=rot)
     stext("G", *uv(ch, QA, ch["bG"] * 1.85), 1.0); stext("S", *uv(ch, QA, -ch["bG"] * 1.85), 1.0)
     # diode: body + stripe on the cathode end
     sline([uv(ch, 38.2, -2.6), uv(ch, 38.2, 2.6)], 2.4 * 0 + 0.18)
@@ -258,11 +261,11 @@ for ch in CH:
         lx, ly = uv(ch, 14.9, 0)
         stext(f"R{m}", lx, ly, 1.0)
     else:
-        stext(f"R{m}", mx_ - 2.9 * ch["sx"], my_, 1.0, rot=90)
+        stext(f"R{m}", mx_ - 3.7 * ch["sx"], my_, 1.0, rot=90)
     # motor label + spin arrow on the disc
     cx, cy = ch["sx"] * MC, ch["sy"] * MC
-    stext(f"M{m}", cx + ch["sx"] * 0.0, cy + ch["sy"] * 6.0 * 0 + (6.2 if ch["sy"] > 0 else -6.2), 1.5)
-    arc = [(cx + 6.0 * math.cos(t), cy + 6.0 * math.sin(t)) for t in [math.radians(d) for d in range(200, 341, 10)]]
+    stext(f"M{m}", cx, cy + (6.9 if ch["sy"] > 0 else -6.9), 1.5)
+    arc = [(cx + 5.3 * math.cos(t), cy + 5.3 * math.sin(t)) for t in [math.radians(d) for d in range(200, 341, 10)]]
     if ch["sy"] > 0:
         arc = [(px, 2 * cy - py) for px, py in arc]     # outer side of the disc; this also flips the turning sense
     # point the arrow the way the motor spins, seen from above (positive area = counter-clockwise)
@@ -273,15 +276,15 @@ for ch in CH:
     sline(arc, 0.2)
     ex, ey = arc[-1]; px, py = arc[-2]
     ang = math.atan2(ey - py, ex - px)
-    sfill(Polygon([(ex + 0.9 * math.cos(ang), ey + 0.9 * math.sin(ang)),
-                                 (ex + 0.9 * math.cos(ang + 2.4), ey + 0.9 * math.sin(ang + 2.4)),
-                                 (ex + 0.9 * math.cos(ang - 2.4), ey + 0.9 * math.sin(ang - 2.4))]))
+    sfill(Polygon([(ex + 0.75 * math.cos(ang), ey + 0.75 * math.sin(ang)),
+                                 (ex + 0.75 * math.cos(ang + 2.4), ey + 0.75 * math.sin(ang + 2.4)),
+                                 (ex + 0.75 * math.cos(ang - 2.4), ey + 0.75 * math.sin(ang - 2.4))]))
     stext(ch["spin"], cx, cy + (-6.2 if ch["sy"] > 0 else 6.2), 1.1)
 
 # MPU outline (body sits in front of the pin row) and pin names
 sline([(-10.5, MPU_Y - 1.3), (10.5, MPU_Y - 1.3), (10.5, MPU_Y + 14.7), (-10.5, MPU_Y + 14.7)], closed=True)
 for i, nm in enumerate(MPU_NAMES):
-    stext(nm, -8.89 + 2.54 * i, MPU_Y - 2.6, 0.75)
+    stext(nm, -8.89 + 2.54 * i, MPU_Y - 3.4, 1.2, rot=90)
 stext("MPU6050  GY-521", 0, MPU_Y + 7.5, 1.2)
 stext("chips up, pins here", 0, MPU_Y + 5.8, 0.85)
 # jumper labels
@@ -291,19 +294,18 @@ for name, p in JP.items():
 # buck-boost module outline (on foam tape, under the ESP32 rear)
 sline([(-10, -30.4), (10, -30.4), (10, -18.6), (-10, -18.6)], 0.15, closed=True)
 stext("TPS63020 ON FOAM", 0, -24.0, 1.0)
-stext("VIN  GND  VOUT  EN-VIN", 0, -26.0, 0.75)
+stext("VIN GND VOUT  EN TO VIN", 0, -26.3, 1.2)
 # ESP32 footprint (it sits above on spacers)
 sline([(-12.5, -30.4), (12.5, -30.4), (12.5, 30.4), (-12.5, 30.4)], 0.15, closed=True)
 stext("ESP32 ABOVE  USB TO REAR", 0, 28.9, 0.8)
 # power entry and cap
-stext("BAT+", -16.1, -25.3, 0.8, rot=90); stext("BAT-", -16.1, -28.5, 0.8, rot=90)
+stext("BAT", -16.1, -26.9, 1.2, rot=90); stext("+", -11.7, -25.3, 1.4); stext("-", -11.7, -28.5, 1.6)
 stext("+", 15.0, -24.8, 1.2); stext("C1", 13.75, -28.6, 0.9)
 # front
 stext("FRONT", 0, 36.5, 1.6)
 sline([(0, 38.4), (0, 39.2)], 0.25)
 sfill(Polygon([(-1.0, 38.1), (1.0, 38.1), (0, 39.4)]))
-stext("FLY-BRAIN DRONE", 0, -10.0, 1.3)
-stext("rev A", 0, -11.9, 0.9)
+stext("FLY-BRAIN DRONE  rev A", 0, -11.4, 1.3)
 # bottom side: battery, buck-boost, screws
 sline([(-10, -20), (10, -20), (10, 20), (-10, 20)], 0.18, "bottom", closed=True)
 stext("BATTERY 1S 500mAh", 0, 12.0, 1.2, "bottom")
