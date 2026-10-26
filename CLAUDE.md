@@ -29,7 +29,7 @@ See `docs/parts.md` and `docs/wiring.md`. Key points:
 
 - `brain/` — brain model setup, feature extraction, laptop-side control loop (Python)
 - `drone/` — ESP32 firmware (PlatformIO)
-- `frame/` — 3D-printable frame, prop guards, camera mount
+- `frame/` — printed frame for rev B: frame/gen_frame.py (manifold3d) writes frame/out/frame.stl and checks clearances; frame/render_frame.py renders pictures in Blender
 - `pcb/fc/` — rev B flight-controller board: generator, Gerbers in pcb/fc/out/, ordering + assembly in pcb/fc/README.md
 - `pcb/` — rev A X-shaped PCB frame (no longer used) and the shared KiCad exporter
 - `docs/` — parts list, wiring, parts page
@@ -46,9 +46,9 @@ As of 2026-10-26:
 - **PCB: switched to rev B (pcb/fc/), not ordered.** Rev A (the X frame) is still in Ayham's **JLCONE** cart (JLCPCB's desktop app, installed) and must be replaced before checkout, after Ayham has added his text in KiCad and exported new Gerbers. Settings: 5 pcs, 1.0 mm, lead-free HASL; "Global Standard Direct Line" shipping (~$7.63); pay with PayPal or a card matching the account. Earlier JLCPCB orders were cancelled for "fraud" (a payment/account flag, not the design). Ayham pays himself; never enter payment details.
 - **Before paying, check real parts against the footprints:** TPS63020 module ≤ 20 × 12 mm, GY-521 pin order VCC GND SCL SDA XDA XCL AD0 INT, MOSFET legs ≤ 1.1 mm, diode leads ≤ 1.0 mm. Asked Ayham for measurements/photos; no answer yet.
 - **Rev B checks:** pcb/fc/gen.py checks pass; pcb/fc/_net.py netlist and MOSFET pin order OK; KiCad 10.0.6 DRC = 0 errors, 0 unconnected (only "footprint library not found" warnings). Re-run DRC after Ayham's KiCad text edits. Not built yet.
-- **Printed frame for rev B: not designed yet.** Needs 4 M2 posts 40 × 38 mm apart (holes at ±20, ±19 mm), motor mounts, a battery holder, and the ESP32 held ≥ 13 mm above the board.
-- **Tools on Ayham's PC:** KiCad 10.0.6 at `C:\Users\ayham\AppData\Local\Programs\KiCad\10.0` (kicad-cli in `bin\`); JLCONE; Python venv for the PCB generator at `C:\Users\ayham\FruitFly\pcb\.venv` (main checkout only; worktrees don't have one) (shapely, matplotlib, kiutils). kicad-cli fails in very long working directories; use a short folder such as `%TEMP%\flydrone-kicheck`.
-- **Not started:** the brain model (Phase 1), webcam pipeline, firmware, the printed frame, assembly.
+- **Printed frame for rev B: designed, not printed.** One piece, about 5.6 g PLA, 95 mm motor diagonal; motor clip tubes (TUBE_ID 8.6, tune after a test print), PCB on 4 M2 posts, ESP32 on two bridges 14 mm above the PCB, battery strapped underneath. Props sit about 28 mm up, 4.5 mm over the MOSFETs. No prop guards or landing feet yet.
+- **Tools on Ayham's PC:** KiCad 10.0.6 at `C:\Users\ayham\AppData\Local\Programs\KiCad\10.0` (kicad-cli in `bin\`); JLCONE; Blender 5.1 at `C:\Program Files\Blender Foundation\Blender 5.1`; Python venv for the PCB and frame generators (shapely, matplotlib, kiutils, manifold3d) at `C:\Users\ayham\FruitFly\pcb\.venv` (main checkout only; worktrees don't have one). kicad-cli fails in very long working directories; use a short folder such as `%TEMP%\flydrone-kicheck`.
+- **Not started:** the brain model (Phase 1), webcam pipeline, firmware, assembly.
 - **Open questions:** ESP-Drone's expected motor order and spin directions (must match M1 CCW front-right, M2 CW rear-right, M3 CCW rear-left, M4 CW front-left, or remap in firmware); the ESP32 board's real pinout (send a photo of its silkscreen); measured weights and thrust.
 - **GitHub:** https://github.com/akhleif-pixel/fly-brain-drone (public). Collaborators: AhmedDoesCS, JaviMARS86 (role not set).
 - **Other shared pages:** 3D build model + 23-step guide https://claude.ai/artifact/NjziEZUPGjHmvTMsy9SgBu (perfboard version; the PCB version is in pcb/README.md).
