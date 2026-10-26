@@ -38,6 +38,20 @@ See `docs/parts.md` and `docs/wiring.md`. Key points:
 - Plan doc (tasks, phases, risks): https://claude.ai/artifact/NuM1vron4UPJLkWDwymUnH
 - Parts page: https://claude.ai/artifact/14MLLZMBsPiJeyRGL1XqSZ
 
+## Status (update as things change)
+
+As of 2026-10-26:
+- **AliExpress parts arrived** (Oct 2026). See `docs/parts.md`. Ayham also owns a charger module, 25 V 100 µF caps and 1N4002 diodes (bench tests only).
+- **PCB rev A not ordered yet.** Earlier JLCPCB orders were cancelled for "fraud" (a payment/account flag, not the design). The board is in Ayham's **JLCONE** cart (JLCPCB's desktop app, installed): 5 pcs, 1.0 mm, lead-free HASL, $3.30; pick "Global Standard Direct Line" shipping (~$7.63) at checkout and pay with PayPal or a card matching the account. Ayham pays himself; never enter payment details.
+- **Before paying, check real parts against the footprints:** motor Ø ≈ 8.5 mm (hole 8.8 + printed collar), TPS63020 module ≤ 20 × 12 mm, GY-521 pin order VCC GND SCL SDA XDA XCL AD0 INT, part leads ≤ 0.9 mm.
+- **PCB checks:** pcb/gen.py checks pass; KiCad 10.0.6 DRC = 0 errors, 0 unconnected (only "footprint library not found" and "silk clipped by mask" warnings, both expected). Netlist and MOSFET pin order verified. Copper is unchanged since the first order; later commits only changed silkscreen.
+- **Known silkscreen issue on any board ordered before commit 37a8237:** the M1/M4 arrows point the wrong way; the CW/CCW text is right.
+- **Tools on Ayham's PC:** KiCad 10.0.6 at `C:\Users\ayham\AppData\Local\Programs\KiCad\10.0` (kicad-cli in `bin\`); JLCONE; Python venv for the PCB generator at `pcb/.venv` (shapely, matplotlib, kiutils). kicad-cli fails in very long working directories; use a short folder such as `%TEMP%\flydrone-kicheck`.
+- **Not started:** the brain model (Phase 1), webcam pipeline, firmware, printed parts (4 motor collars, 2 ESP32 spacers, battery tray), assembly.
+- **Open questions:** ESP-Drone's expected motor order and spin directions (must match M1 CCW front-right, M2 CW rear-right, M3 CCW rear-left, M4 CW front-left, or remap in firmware); the ESP32 board's real pinout (send a photo of its silkscreen); measured weights and thrust.
+- **GitHub:** https://github.com/akhleif-pixel/fly-brain-drone (public). Collaborators: AhmedDoesCS, JaviMARS86 (role not set).
+- **Other shared pages:** 3D build model + 23-step guide https://claude.ai/artifact/NjziEZUPGjHmvTMsy9SgBu (perfboard version; the PCB version is in pcb/README.md).
+
 ## Safety
 
 Props off for motor tests. LiPo: charge at ≤500 mA, unplugged from the drone, never unattended. Check the 3.3 V rail with a multimeter before connecting the ESP32.
