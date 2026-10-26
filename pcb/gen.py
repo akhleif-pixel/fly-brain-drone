@@ -597,4 +597,5 @@ import sys
 sys.path.insert(0, HERE)
 import kicad_export
 kpath, knets = kicad_export.write(globals())
-print(f"KiCad project: {os.path.relpath(kpath, HERE)} ({len(knets)} nets)")
+if kpath:
+    print(f"KiCad project: {os.path.relpath(kpath, HERE)} ({len(knets)} nets)")

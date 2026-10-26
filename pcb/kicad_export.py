@@ -26,6 +26,15 @@ def write(G):
     K_TEXT, K_LINE, K_FILL = G["K_TEXT"], G["K_LINE"], G["K_FILL"]
     out_dir = os.path.join(G["HERE"], "kicad")
     os.makedirs(out_dir, exist_ok=True)
+    base = G.get("NAME", "fly-drone")
+    pcb_path = os.path.join(out_dir, base + ".kicad_pcb")
+    # once someone has saved the board in KiCad, that file is the master copy: leave it alone
+    if os.path.exists(pcb_path):
+        with open(pcb_path, encoding="utf-8") as fh:
+            head = fh.read(400)
+        if '(generator "fly_drone_gen")' not in head:
+            print(f"KiCad file {pcb_path} was saved in KiCad; not overwriting it. Make changes there.")
+            return None, {}
     X = lambda x: n(x)
     Y = lambda y: n(-y)
     LAYER = {"top": "F.SilkS", "bottom": "B.SilkS"}
@@ -132,7 +141,6 @@ def write(G):
         lines.append(f'  (gr_poly (pts {pts}) (stroke (width 0.05) (type solid)) (fill solid) (layer {q(LAYER[f["layer"]])}) (uuid {q(U())}))')
     lines.append(')')
 
-    pcb_path = os.path.join(out_dir, "fly-drone.kicad_pcb")
     with open(pcb_path, "w", encoding="utf-8", newline="\n") as fh:
         fh.write("\n".join(lines) + "\n")
 
@@ -141,12 +149,12 @@ def write(G):
             "defaults": {"board_outline_line_width": 0.1, "copper_line_width": 0.2, "silk_line_width": 0.15, "silk_text_size_h": 1.0, "silk_text_size_v": 1.0, "silk_text_thickness": 0.15},
             "rules": {"min_clearance": 0.2, "min_copper_edge_clearance": 0.3, "min_track_width": 0.2, "min_through_hole_diameter": 0.3, "min_hole_to_hole": 0.25, "min_via_diameter": 0.5},
             "track_widths": [0.3, 0.5, 0.8, 1.6], "via_dimensions": []}},
-        "meta": {"filename": "fly-drone.kicad_pro", "version": 1},
+        "meta": {"filename": base + ".kicad_pro", "version": 1},
         "net_settings": {"classes": [{"name": "Default", "clearance": 0.25, "track_width": 0.3, "via_diameter": 0.8, "via_drill": 0.4,
                                       "wire_width": 6, "bus_width": 12, "line_style": 0, "schematic_color": "rgba(0, 0, 0, 0.000)", "pcb_color": "rgba(0, 0, 0, 0.000)"}],
                          "meta": {"version": 3}},
         "pcbnew": {"last_paths": {"gerber": "../out/"}},
     }
-    with open(os.path.join(out_dir, "fly-drone.kicad_pro"), "w", encoding="utf-8", newline="\n") as fh:
+    with open(os.path.join(out_dir, base + ".kicad_pro"), "w", encoding="utf-8", newline="\n") as fh:
         json.dump(pro, fh, indent=2)
     return pcb_path, NET

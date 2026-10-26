@@ -1,5 +1,7 @@
 # PCB frame, rev A
 
+> **No longer used.** We switched to a small flight-controller board in a printed frame: see [fc/README.md](fc/README.md).
+
 The PCB is the drone's frame: an X-shaped, 2-layer board, 83 × 83 mm, about 8.6 g at 1.0 mm thick. It replaces the printed frame, the perfboard and most of the wiring. Every part is through-hole, so it can be hand-soldered.
 
 ![Top](out/preview-top.png)
