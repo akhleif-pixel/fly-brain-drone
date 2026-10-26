@@ -1,0 +1,802 @@
+<meta charset="utf-8">
+<title>Fly-Brain Drone Rev B</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the same workbench as the first model. 3D stage + parts list, then what changed, the build guide, the pad map and open items, all drawn from one parts registry. */
+:root {
+  --bg: #eef1ef;
+  --surface: #ffffff;
+  --stage: #e3e8e5;
+  --ink: #16201b;
+  --muted: #5a6760;
+  --line: #d3dad5;
+  --eye: #b8321f;
+  --eye-soft: #f6e3df;
+  --pla: #e8742a;
+  --new: #1f7a4d;
+  --new-soft: #dff1e7;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111613; --surface: #19201c; --stage: #0c100e; --ink: #e6ece8; --muted: #9aa8a0;
+    --line: #2c3631; --eye: #ff7a63; --eye-soft: #3a211c; --pla: #ff9a52; --new: #5fd39a; --new-soft: #17301f; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111613; --surface: #19201c; --stage: #0c100e; --ink: #e6ece8; --muted: #9aa8a0;
+  --line: #2c3631; --eye: #ff7a63; --eye-soft: #3a211c; --pla: #ff9a52; --new: #5fd39a; --new-soft: #17301f; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 22px; }
+header { padding-top: 32px; display: grid; gap: 10px; }
+.eyebrow { font: 500 12px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--eye); }
+h1 { font: 800 clamp(1.9rem, 4.5vw, 3rem)/1.05 var(--font-display); margin: 0; letter-spacing: -.02em; text-wrap: balance; }
+h2 { margin: 0; font: 700 1.25rem/1.2 var(--font-display); text-wrap: balance; }
+h3 { margin: 0; font: 600 15px/1.3 var(--font-body); }
+.lede { margin: 0; color: var(--muted); max-width: 72ch; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 24px; font: 500 13px/1.3 var(--font-mono); font-variant-numeric: tabular-nums; }
+.facts b { font-weight: 500; color: var(--eye); }
+
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+.stage { position: relative; background: var(--stage); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; aspect-ratio: 4 / 3; max-width: 100%; min-height: 380px; }
+.stage canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.stage canvas:active { cursor: grabbing; }
+.controls { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 6px; z-index: 2; }
+button.chip { font: 500 12.5px/1 var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; cursor: pointer; }
+button.chip.primary { border-color: var(--eye); color: var(--eye); }
+button.chip[aria-pressed="true"] { background: var(--eye-soft); color: var(--eye); border-color: var(--eye); }
+button:focus-visible { outline: 2px solid var(--eye); outline-offset: 2px; }
+.info { position: absolute; left: 12px; right: 12px; bottom: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 3px; max-width: 540px; z-index: 2; }
+.info b { font-weight: 600; }
+.info .w { font: 500 12px/1.3 var(--font-mono); color: var(--eye); }
+.info p { margin: 0; font-size: 13.5px; color: var(--muted); }
+.info .chg { color: var(--new); font-size: 13px; }
+.gnav { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.gnav .bar { flex: 1; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.gnav .bar i { display: block; height: 100%; background: var(--eye); width: 0; transition: width .3s; }
+.gnav button { font: 500 12.5px/1 var(--font-body); padding: 7px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+.gnav button.next { background: var(--eye); border-color: var(--eye); color: #fff; }
+.labels { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.labels span { position: absolute; transform: translate(-50%, -100%); font: 500 11.5px/1 var(--font-mono); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 3px 5px; white-space: nowrap; opacity: .92; }
+.loading { position: absolute; inset: 0; display: grid; place-items: center; font: 500 13px/1 var(--font-mono); color: var(--muted); }
+
+aside { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: grid; gap: 10px; }
+.total { font: 500 13px/1.4 var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.total b { color: var(--ink); font-weight: 600; }
+.plist { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.part { width: 100%; display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; background: none; border: 0; border-radius: 6px; padding: 6px 8px; color: var(--ink); font: 400 13.5px/1.3 var(--font-body); cursor: pointer; }
+.part:hover { background: var(--bg); }
+.part.on { background: var(--eye-soft); }
+.part .tag { font: 500 10px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--new); background: var(--new-soft); border-radius: 3px; padding: 2px 4px; margin-left: 6px; vertical-align: 1px; }
+.dot { width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--line); }
+.part .g { font: 400 12px/1 var(--font-mono); color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.sub { font: 500 11px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 10px 8px 2px; }
+.note { margin: 0; font-size: 12.5px; color: var(--muted); }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; }
+.panel > p { margin: 0; color: var(--muted); max-width: 74ch; }
+.revs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 12px; }
+.rev { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 6px; align-content: start; }
+.rev.now { border-color: var(--new); background: var(--new-soft); }
+.rev .when { font: 500 11.5px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.rev.now .when { color: var(--new); }
+.rev p { margin: 0; font-size: 13.5px; color: var(--muted); }
+.rev a { color: var(--eye); }
+.diff { display: grid; gap: 0; }
+.diff .row { display: grid; grid-template-columns: 150px minmax(0, 1fr) minmax(0, 1fr); gap: 14px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.diff .row.head { font: 500 11.5px/1.2 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.diff .row > :first-child { font-weight: 600; }
+.diff .old { color: var(--muted); }
+.diff .nw { color: var(--ink); }
+.steps { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 6px 18px; counter-reset: s; }
+.steps li { counter-increment: s; }
+.steps button { width: 100%; text-align: left; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 8px; background: none; border: 0; border-radius: 6px; padding: 7px 8px; color: var(--ink); cursor: pointer; font: 500 14px/1.35 var(--font-body); }
+.steps button::before { content: counter(s); font: 500 12px/1.6 var(--font-mono); color: var(--eye); }
+.steps button:hover, .steps button.on { background: var(--eye-soft); }
+.steps small { display: block; color: var(--muted); font-size: 12.5px; font-weight: 400; }
+.table { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 11.5px/1.2 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+td.mono { font-family: var(--font-mono); font-size: 12.5px; white-space: nowrap; }
+.sw { display: inline-block; width: 22px; height: 6px; border-radius: 3px; vertical-align: middle; margin-right: 6px; border: 1px solid var(--line); }
+.warn { border-left: 3px solid var(--eye); padding: 8px 12px; background: var(--eye-soft); border-radius: 0 6px 6px 0; font-size: 13.5px; margin: 0; }
+.open { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; }
+.open li::marker { color: var(--eye); }
+
+@media (max-width: 860px) { .main { grid-template-columns: minmax(0, 1fr); } .stage { aspect-ratio: auto; min-height: 0; } .stage canvas { height: min(92vw, 560px); } .info { position: static; margin: 0 12px 12px; max-width: none; } .labels { bottom: auto; height: min(92vw, 560px); } .diff .row { grid-template-columns: minmax(0, 1fr); gap: 2px; } .diff .row.head { display: none; } }
+@media (prefers-reduced-motion: reduce) { .gnav .bar i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Rev B · small flight-controller board in a printed frame</div>
+    <h1>Fly-Brain Drone Rev B</h1>
+    <p class="lede">The drone as it stands now. The motors moved off the PCB into a one-piece printed frame, and the PCB shrank to a 46 × 44 mm board in the middle. The frame is the real printed mesh and the board is textured from the real copper, mask and drill files. Every other part is modelled at its real size and height, wired the way it will be soldered.</p>
+    <div class="facts">
+      <span>Motor to motor <b>95 mm</b></span>
+      <span>Board <b>46 × 44 mm</b>, 4.7 g</span>
+      <span>Frame <b>78 × 78 mm</b>, 5.6 g PLA</span>
+      <span>Weight <b>~66–76 g</b> estimated</span>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="stage" id="stage">
+      <div class="loading" id="loading">Loading the model…</div>
+      <div class="labels" id="labels" hidden></div>
+      <div class="controls">
+        <button type="button" class="chip primary" id="btn-guide" aria-pressed="false">Build guide</button>
+        <button type="button" class="chip" id="btn-explode" aria-pressed="false">Exploded</button>
+        <button type="button" class="chip" id="btn-board">Board close-up</button>
+        <button type="button" class="chip" id="btn-top">Top</button>
+        <button type="button" class="chip" id="btn-below">From below</button>
+        <button type="button" class="chip" id="btn-esp" aria-pressed="true">ESP32</button>
+        <button type="button" class="chip" id="btn-labels" aria-pressed="false">Labels</button>
+        <button type="button" class="chip" id="btn-spin" aria-pressed="true">Spin props</button>
+        <button type="button" class="chip" id="btn-reset">Reset</button>
+      </div>
+      <div class="info" id="info">
+        <b id="info-name">Tap any part</b>
+        <span class="w" id="info-weight"></span>
+        <p id="info-role">Drag to rotate, scroll or pinch to zoom, right-drag to pan. Turn off the ESP32 to see the board under it.</p>
+        <p class="chg" id="info-chg" hidden></p>
+        <div class="gnav" id="gnav" hidden>
+          <button type="button" id="g-prev">Back</button>
+          <div class="bar"><i id="g-bar"></i></div>
+          <button type="button" class="next" id="g-next">Next</button>
+        </div>
+      </div>
+    </div>
+    <aside>
+      <h2>Parts on the drone</h2>
+      <div class="total" id="total"></div>
+      <ul class="plist" id="parts"></ul>
+      <p class="note">Weights are typical values, not measurements. <span style="color:var(--new)">New</span> marks parts that changed in rev B.</p>
+    </aside>
+  </div>
+
+  <section class="panel" id="changes">
+    <h2>What changed</h2>
+    <p>Three versions so far. The parts, the wiring and the ESP32 pins are the same in all of them; what moved is how everything is held together.</p>
+    <div class="revs">
+      <div class="rev">
+        <span class="when">Version 1 · perfboard</span>
+        <h3>Printed frame, perfboard driver</h3>
+        <p>MOSFETs, diodes and resistors hand-wired on a 4 × 6 cm perfboard, everything else on a printed frame. <a href="https://claude.ai/artifact/NjziEZUPGjHmvTMsy9SgBu">Old 3D model</a></p>
+      </div>
+      <div class="rev">
+        <span class="when">Rev A · PCB as the frame</span>
+        <h3>83 × 83 mm X-shaped PCB</h3>
+        <p>The board itself was the frame: motors in 8.8 mm holes at the arm tips, MOSFETs lying flat, battery in a tray screwed under it. Never ordered; Ayham found it too big.</p>
+      </div>
+      <div class="rev now">
+        <span class="when">Rev B · now</span>
+        <h3>46 × 44 mm board in a printed frame</h3>
+        <p>A small flight-controller board on four posts in a 5.6 g printed X. Designed and checked, not ordered or printed yet.</p>
+      </div>
+    </div>
+    <div class="diff" id="diff"></div>
+  </section>
+
+  <section class="panel" id="guide">
+    <h2>Build guide</h2>
+    <p>The order to put it together. Pick a step to see it on the model, or press Build guide above and click through.</p>
+    <ol class="steps" id="steps"></ol>
+    <p class="warn">Props stay off for every motor test. Charge the LiPo at 500 mA or less, unplugged from the drone. Measure 3.3 V on the front 3V3 pad before the ESP32 goes on.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Pads on the board</h2>
+    <p>The silkscreen has no text yet; Ayham is adding labels in KiCad. Front row, left to right: G4, G3, 3V3, SCL, SDA, GND, INT, G2, G1. Rear row: BAT+ (square), BAT−, OUT, GND, IN, then C1. The ESP32's pinout is still unconfirmed, so every signal goes through a short wire instead of straight into it.</p>
+    <div class="table">
+      <table>
+        <thead><tr><th>Pad</th><th>Goes to</th><th>Wire</th><th>What it is</th></tr></thead>
+        <tbody id="padtable"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Still open</h2>
+    <ol class="open">
+      <li>Measure the real parts against the board before ordering: TPS63020 module 20 × 12 mm or smaller, GY-521 pin order, MOSFET legs 1.1 mm or thinner.</li>
+      <li>Photo of the ESP32 board's pin labels and a ruler, to confirm the pins and its size. The ESP32 layout in this model is approximate.</li>
+      <li>Test-print one motor tube and adjust the fit (TUBE_ID, now 8.6 mm).</li>
+      <li>A camera mount. The OV2640 hangs on its ribbon at the front for now.</li>
+      <li>Weigh everything and measure one motor's thrust. With about 70 g to lift, each motor needs about 35 g of thrust for a 2:1 margin.</li>
+      <li>Which motor order and spin directions ESP-Drone expects, compared with M1 front-right CCW, M2 rear-right CW, M3 rear-left CCW, M4 front-left CW.</li>
+    </ol>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(() => {
+// ------------------------------------------------------------------ data from the design files (mm, x right, y front, z up)
+const PADS = {"Q1.G":[19.4,10.08],"Q1.D":[19.4,7.54],"Q1.S":[19.4,5.0],"M1+":[13.0,19.6],"M1-":[16.0,19.6],"D1.A":[15.4,16.0],"D1.K":[15.4,3.3],"R1.1":[12.2,10.08],"R1.2":[12.2,2.46],"Q2.G":[19.4,-5.0],"Q2.D":[19.4,-7.54],"Q2.S":[19.4,-10.08],"M2+":[13.0,-19.6],"M2-":[16.0,-19.6],"D2.A":[15.4,-16.0],"D2.K":[15.4,-3.3],"R2.1":[12.2,-5.0],"R2.2":[12.2,-12.62],"Q3.G":[-19.4,-10.08],"Q3.D":[-19.4,-7.54],"Q3.S":[-19.4,-5.0],"M3+":[-13.0,-19.6],"M3-":[-16.0,-19.6],"D3.A":[-15.4,-16.0],"D3.K":[-15.4,-3.3],"R3.1":[-12.2,-10.08],"R3.2":[-12.2,-2.46],"Q4.G":[-19.4,5.0],"Q4.D":[-19.4,7.54],"Q4.S":[-19.4,10.08],"M4+":[-13.0,19.6],"M4-":[-16.0,19.6],"D4.A":[-15.4,16.0],"D4.K":[-15.4,3.3],"R4.1":[-12.2,5.0],"R4.2":[-12.2,12.62],"J.G4":[-10.16,20.2],"J.G3":[-7.62,20.2],"J.3V3":[-5.08,20.2],"J.SCL":[-2.54,20.2],"J.SDA":[0.0,20.2],"J.GND":[2.54,20.2],"J.INT":[5.08,20.2],"J.G2":[7.62,20.2],"J.G1":[10.16,20.2],"U2.VCC":[-8.89,16.0],"U2.GND":[-6.35,16.0],"U2.SCL":[-3.81,16.0],"U2.SDA":[-1.27,16.0],"U2.XDA":[1.27,16.0],"U2.XCL":[3.81,16.0],"U2.AD0":[6.35,16.0],"U2.INT":[8.89,16.0],"BAT+":[-9.0,-18.5],"BAT-":[-5.8,-18.5],"J.OUT":[-2.54,-18.5],"J.TG":[0.0,-18.5],"J.IN":[2.54,-18.5],"C1.-":[5.6,-18.5],"C1.+":[8.1,-18.5]};
+const MC = 47.5 / Math.SQRT2;          // motor axis offset in x and y
+const Z = { pcbBot: 4, pcbTop: 5, esp: 19, motor: 6, motorTop: 26, prop: 28.6 };
+const MOTORS = [
+  { m: 1, sx: 1, sy: 1, spin: 'CCW', where: 'front right', wires: ['#d93a2b', '#2f5fd0'] },
+  { m: 2, sx: 1, sy: -1, spin: 'CW', where: 'rear right', wires: ['#e9e9e4', '#1b1b1b'] },
+  { m: 3, sx: -1, sy: -1, spin: 'CCW', where: 'rear left', wires: ['#d93a2b', '#2f5fd0'] },
+  { m: 4, sx: -1, sy: 1, spin: 'CW', where: 'front left', wires: ['#e9e9e4', '#1b1b1b'] },
+];
+// signal wires from the front pads up to the ESP32 (its pin positions are approximate)
+const ESPW = [
+  ['J.G4', 'GPIO 38', 'Motor 4 gate', '#f2b134', -1, 22.86], ['J.G3', 'GPIO 14', 'Motor 3 gate', '#e8742a', -1, 20.32],
+  ['J.3V3', '3V3', '3.3 V supply in', '#d93a2b', -1, 17.78], ['J.SCL', 'GPIO 42', 'MPU6050 clock', '#3f8f4f', -1, 15.24],
+  ['J.SDA', 'GPIO 41', 'MPU6050 data', '#2f5fd0', -1, 12.7], ['J.GND', 'GND', 'Ground', '#1b1b1b', 1, 22.86],
+  ['J.INT', 'GPIO 40', 'MPU6050 interrupt', '#e9e9e4', 1, 20.32], ['J.G2', 'GPIO 47', 'Motor 2 gate', '#9b59b6', 1, 17.78],
+  ['J.G1', 'GPIO 21', 'Motor 1 gate', '#c08a2d', 1, 15.24],
+];
+
+// ------------------------------------------------------------------ parts registry
+const PARTS = [
+  { id: 'frame', sub: 'Printed', name: 'Printed frame', g: 5.6, color: '#e8742a', isNew: true, ex: 0,
+    role: 'One piece, printed flat with no supports. Motor clip tubes, four PCB posts, two ESP32 bridges and crossbars for the battery strap.',
+    chg: 'New in rev B. In rev A the PCB itself was the frame.' },
+  { id: 'pcb', sub: 'Board', name: 'Flight-controller PCB', g: 4.7, color: '#14532d', isNew: true, ex: 12,
+    role: '46 × 44 mm, 2 layers, 1.0 mm. Top: parts and a ground pour. Bottom: battery-plus pour, gate and 3.3 V traces. 60 plated holes.',
+    chg: 'Was an 83 × 83 mm X that carried the motors (8.6 g). No silkscreen text yet.' },
+  { id: 'screws', sub: 'Board', name: 'M2 screws ×4', g: 1.0, color: '#9aa1a8', ex: 20,
+    role: 'Through the board corners straight into the frame posts (1.7 mm holes, self-tapping).', chg: 'Four corner screws instead of two through a tray.' },
+  { id: 'mosfets', sub: 'Board', name: 'IRLB8721 MOSFETs ×4', g: 7.6, color: '#202020', isNew: true, ex: 12,
+    role: 'Switch each motor to ground. Standing upright, metal tab toward the board edge, gate leg on the left as you face the printed side.',
+    chg: 'Stand upright along the edges now; in rev A they lay flat on copper pads.' },
+  { id: 'diodes', sub: 'Board', name: '1N5819 diodes ×4', g: 1.4, color: '#2b2b2b', ex: 12,
+    role: 'Flyback diodes across each motor. Lying flat, stripe toward the middle of the board.' },
+  { id: 'resistors', sub: 'Board', name: '10 kΩ resistors ×4', g: 0.4, color: '#5b8fd6', ex: 12,
+    role: 'Gate pull-downs, so the motors stay off while the ESP32 boots.' },
+  { id: 'c1', sub: 'Board', name: '100 µF capacitor', g: 1.0, color: '#1e3a7a', ex: 12,
+    role: 'Across the battery, at the rear. Standing, + on the square pad.' },
+  { id: 'mpu', sub: 'Board', name: 'MPU6050 (GY-521)', g: 2.0, color: '#2563a6', ex: 12,
+    role: 'Gyro and accelerometer for balance, on its 8-pin header in the middle of the board, chips up, body toward the rear.' },
+  { id: 'tps', sub: 'Board', name: 'TPS63020 buck-boost', g: 1.0, color: '#6b3fa0', ex: 12,
+    role: 'Turns 3.0–4.2 V from the battery into a steady 3.3 V. On foam tape under the ESP32, three wires to OUT, GND and IN, EN bridged to VIN.' },
+  { id: 'esp', sub: 'Brain link', name: 'ESP32-S3 CAM board', g: 8.0, color: '#26282c', isNew: true, ex: 44,
+    role: 'Runs the flight firmware and streams video to the laptop. Lies on the two frame bridges, 14 mm above the PCB. Layout and size approximate.',
+    chg: 'Sits on printed bridges now instead of 8 mm spacers on the board.' },
+  { id: 'cam', sub: 'Brain link', name: 'OV2640 camera', g: 1.5, color: '#111111', ex: 44,
+    role: "The fly's eye: 66° lens on a 21 mm ribbon into the ESP32's 24-pin connector, looking forward. No printed mount yet." },
+  { id: 'espwires', sub: 'Brain link', name: 'Wires to the ESP32 ×9', g: 1.0, color: '#f2b134', ex: null,
+    role: 'Short 28 AWG wires from the front pads up to the ESP32 pins: four gates, I²C, interrupt, 3.3 V and ground.',
+    chg: 'All nine come from one row at the front now (rev A had pads front and rear).' },
+  { id: 'motors', sub: 'Flight', name: '8520 motors ×4', g: 17.6, color: '#c9ccd1', isNew: true, ex: 22,
+    role: 'Coreless, 8.5 × 20 mm. Clipped into the frame tubes, resting on an inner lip; wires out the bottom, along the arm and up into the corner pads.',
+    chg: 'Held by printed clip tubes; in rev A they sat in 8.8 mm PCB holes with collars.' },
+  { id: 'props', sub: 'Flight', name: '55 mm props ×4', g: 2.8, color: '#e9e9e4', ex: 42,
+    role: 'M1 and M3 spin counter-clockwise, M2 and M4 clockwise (seen from above). 12 mm between neighbouring tips, about 4.5 mm above the tallest MOSFET.' },
+  { id: 'battery', sub: 'Power', name: '1S 500 mAh LiPo', g: 12.5, color: '#9aa6b8', isNew: true, ex: -24,
+    role: 'Under the frame, about 20 × 40 × 7 mm. Pigtail up around the rear edge into BAT+ and BAT−.',
+    chg: 'Strapped under the frame; in rev A it sat in a printed tray screwed to the PCB.' },
+  { id: 'strap', sub: 'Power', name: 'Velcro strap', g: 1.0, color: '#333333', ex: -24,
+    role: 'Up to 10 mm wide, under the battery and over the bottom crossbars of the two ESP32 bridges.' },
+  { id: 'wires', sub: 'Power', name: 'Motor and battery wires, solder', g: 2.0, color: '#d93a2b', ex: null,
+    role: 'Motor leads (CCW red/blue, CW white/black) and the battery pigtail.' },
+];
+const byId = Object.fromEntries(PARTS.map(p => [p.id, p]));
+const total = PARTS.reduce((s, p) => s + p.g, 0);
+
+// ------------------------------------------------------------------ build guide
+const STEPS = [
+  { t: 'Print the frame', d: 'PLA or PETG, 0.2 mm layers, 3 walls, brim, no supports. Print one tube first and check a motor slides in snugly.', show: ['frame'], hi: ['frame'], view: 'iso' },
+  { t: 'Resistors R1–R4', d: 'Lying flat next to each MOSFET position. Trim every lead under the board to about 1.5 mm.', show: ['pcb', 'resistors'], hi: ['resistors'], view: 'board' },
+  { t: 'Diodes D1–D4', d: 'Lying flat along the edges, stripe on the square pad, toward the middle of the board.', show: ['pcb', 'resistors', 'diodes'], hi: ['diodes'], view: 'board' },
+  { t: 'MOSFETs Q1–Q4', d: 'Standing upright, metal tab toward the board edge. Legs straight down, about 3 mm of leg above the board.', show: ['pcb', 'resistors', 'diodes', 'mosfets'], hi: ['mosfets'], view: 'board' },
+  { t: 'Capacitor C1', d: 'Standing at the rear, + on the square pad (the stripe on the can marks −).', show: ['pcb', 'resistors', 'diodes', 'mosfets', 'c1'], hi: ['c1'], view: 'rear' },
+  { t: 'MPU6050', d: 'On its 8-pin header, chips up, body toward the rear so it sits over the board.', show: ['pcb', 'resistors', 'diodes', 'mosfets', 'c1', 'mpu'], hi: ['mpu'], view: 'board' },
+  { t: 'Buck-boost and 3.3 V check', d: 'Module on foam tape in its outline, three short wires to OUT, GND and IN, EN bridged to VIN. Connect the battery and measure 3.3 V at the front 3V3 pad.', show: ['pcb', 'resistors', 'diodes', 'mosfets', 'c1', 'mpu', 'tps'], hi: ['tps'], view: 'rear' },
+  { t: 'Board onto the frame', d: 'Four M2 screws through the corners into the posts. Do not overtighten; the plastic is the thread.', show: ['frame', 'pcb', 'resistors', 'diodes', 'mosfets', 'c1', 'mpu', 'tps', 'screws'], hi: ['screws', 'pcb'], view: 'iso' },
+  { t: 'Motors', d: 'Push each motor into its tube until it sits on the lip. Wires out the bottom, along the arm, up into the corner pads: + to the pad nearer the middle.', show: ['frame', 'pcb', 'resistors', 'diodes', 'mosfets', 'c1', 'mpu', 'tps', 'screws', 'motors', 'wires'], hi: ['motors', 'wires'], view: 'iso' },
+  { t: 'ESP32 and camera', d: 'Nine short wires from the front pads, then lay the ESP32 on the bridges (foam tape or a rubber band). Camera ribbon into its connector, lens forward.', show: ['frame', 'pcb', 'resistors', 'diodes', 'mosfets', 'c1', 'mpu', 'tps', 'screws', 'motors', 'wires', 'espwires', 'esp', 'cam'], hi: ['espwires', 'esp', 'cam'], view: 'front' },
+  { t: 'Battery', d: 'Under the frame, strap under the battery and over the two bridge crossbars. Pigtail up around the rear edge.', show: ['frame', 'pcb', 'resistors', 'diodes', 'mosfets', 'c1', 'mpu', 'tps', 'screws', 'motors', 'wires', 'espwires', 'esp', 'cam', 'battery', 'strap'], hi: ['battery', 'strap'], view: 'below' },
+  { t: 'Spin check, then props', d: 'Props off: check M1 and M3 spin counter-clockwise, M2 and M4 clockwise from above. Swap a motor\'s two wires if it is wrong. Props go on last.', show: PARTS.map(p => p.id), hi: ['props'], view: 'iso' },
+];
+
+// ------------------------------------------------------------------ change table and pad table
+const DIFF = [
+  ['Frame', 'The PCB was the frame (83 × 83 mm X, 8.6 g)', 'Printed one-piece X, 78 × 78 mm, 5.6 g'],
+  ['Circuit board', '83 × 83 mm, carried the motors', '46 × 44 mm in the middle, 4.7 g'],
+  ['Motors', 'In 8.8 mm PCB holes with printed collars', 'In printed clip tubes, resting on an inner lip'],
+  ['MOSFETs', 'Lying flat, metal side down on copper', 'Standing upright along the side edges, tab outward'],
+  ['ESP32', 'On two 8 mm printed spacers on the board', 'On two frame bridges, 14 mm above the board'],
+  ['Battery', 'Printed tray screwed under the PCB', 'Strapped under the frame over the bridge crossbars'],
+  ['ESP32 wires', 'Pads at the front and the rear', 'One row of nine pads at the front'],
+  ['Silkscreen', 'Full labels and spin arrows', 'Outlines only; Ayham is adding his own text'],
+  ['Unchanged', 'Same parts, same circuit, same pins', 'Gates on GPIO 21, 47, 14, 38; MPU6050 on 42, 41, 40'],
+];
+document.getElementById('diff').innerHTML =
+  '<div class="row head"><span></span><span>Rev A</span><span>Rev B</span></div>' +
+  DIFF.map(([k, a, b]) => `<div class="row"><span>${k}</span><span class="old">${a}</span><span class="nw">${b}</span></div>`).join('');
+const padRows = [
+  ...ESPW.map(([pad, to, what, col]) => [pad.slice(2), 'ESP32 ' + to, col, what]),
+  ['M1+ / M1− … M4+ / M4−', 'Motor leads, at each corner', '#d93a2b', '+ is battery plus; − is switched by the MOSFET'],
+  ['BAT+ / BAT−', 'Battery pigtail', '#d93a2b', 'BAT+ is the square pad'],
+  ['OUT / GND / IN', 'TPS63020 VOUT / GND / VIN', '#f2b134', 'Bridge the module\'s EN pad to its VIN'],
+];
+document.getElementById('padtable').innerHTML = padRows.map(([a, b, c, d]) =>
+  `<tr><td class="mono">${a}</td><td>${b}</td><td><span class="sw" style="background:${c}"></span></td><td>${d}</td></tr>`).join('');
+
+// ------------------------------------------------------------------ parts list
+const plist = document.getElementById('parts');
+document.getElementById('total').innerHTML = `Estimated <b>${Math.round(total)} g</b> (about 66–76 g). Needs roughly twice that in thrust, about 35 g per motor.`;
+let lastSub = '';
+for (const p of PARTS) {
+  if (p.sub !== lastSub) { const li = document.createElement('li'); li.className = 'sub'; li.textContent = p.sub; plist.appendChild(li); lastSub = p.sub; }
+  const li = document.createElement('li');
+  li.innerHTML = `<button type="button" class="part" data-id="${p.id}"><span class="dot" style="background:${p.color}"></span><span>${p.name}${p.isNew ? '<span class="tag">New</span>' : ''}</span><span class="g">${p.g.toFixed(1)} g</span></button>`;
+  plist.appendChild(li);
+}
+
+// ------------------------------------------------------------------ 3D scene
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stage.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, 1, 1, 3000);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.minDistance = 40; controls.maxDistance = 600;
+
+function stageColor() { return getComputedStyle(document.documentElement).getPropertyValue('--stage').trim() || '#e3e8e5'; }
+function applyTheme() { scene.background = new THREE.Color(stageColor()); }
+applyTheme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a9590, 0.75));
+const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+sun.position.set(80, 160, 90); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -120, right: 120, top: 120, bottom: -120, near: 10, far: 500 });
+sun.shadow.bias = -0.0004;
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0xffffff, 0.3); fill.position.set(-120, 60, -80); scene.add(fill);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(1200, 1200), new THREE.ShadowMaterial({ opacity: 0.16 }));
+ground.rotation.x = -Math.PI / 2; ground.position.y = -10; ground.receiveShadow = true; scene.add(ground);
+
+// CAD coordinates inside: x right, y front, z up
+const root = new THREE.Group(); root.rotation.x = -Math.PI / 2; scene.add(root);
+
+// ------------------------------------------------------------------ geometry helpers
+const M = (color, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.55, metalness: 0 }, o));
+const MAT = {
+  pla: M('#e8742a', { roughness: 0.62 }), metal: M('#c9ccd1', { roughness: 0.32, metalness: 0.45 }), tin: M('#d5d8dc', { roughness: 0.35, metalness: 0.4 }),
+  gold: M('#d4a64a', { roughness: 0.32, metalness: 0.5 }), black: M('#1b1b1d', { roughness: 0.5 }), plastic: M('#202022', { roughness: 0.42 }),
+  blueMask: M('#1f56a8', { roughness: 0.45 }), blackMask: M('#18191c', { roughness: 0.42 }), copper: M('#c27a3c', { roughness: 0.35, metalness: 0.5 }),
+  fr4: M('#cfc79a', { roughness: 0.8 }), foam: M('#d9d6cf', { roughness: 0.95 }), brass: M('#b8923e', { roughness: 0.3, metalness: 0.5 }),
+};
+function cad(mesh) { mesh.castShadow = true; mesh.receiveShadow = true; return mesh; }
+function box(w, d, h, mat, x = 0, y = 0, z = 0) { const m = cad(new THREE.Mesh(new THREE.BoxGeometry(w, d, h), mat)); m.position.set(x, y, z); return m; }
+function cylZ(r, h, mat, x = 0, y = 0, z0 = 0, seg = 32) {
+  const g = new THREE.CylinderGeometry(r, r, h, seg); g.rotateX(Math.PI / 2);
+  const m = cad(new THREE.Mesh(g, mat)); m.position.set(x, y, z0 + h / 2); return m;
+}
+function cylAxis(r, len, mat, axis, x, y, z, seg = 28) {      // cylinder along x or y, centered
+  const g = new THREE.CylinderGeometry(r, r, len, seg);
+  if (axis === 'x') g.rotateZ(Math.PI / 2);
+  const m = cad(new THREE.Mesh(g, mat)); m.position.set(x, y, z); return m;
+}
+function wire(points, color, r = 0.36) {
+  const curve = new THREE.CatmullRomCurve3(points.map(p => new THREE.Vector3(...p)), false, 'centripetal');
+  const m = new THREE.Mesh(new THREE.TubeGeometry(curve, Math.max(24, points.length * 14), r, 8, false), M(color, { roughness: 0.6 }));
+  return cad(m);
+}
+function roundedRect(w, h, r) {
+  const s = new THREE.Shape(), x = -w / 2, y = -h / 2;
+  s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r); s.lineTo(x + w, y + h - r);
+  s.quadraticCurveTo(x + w, y + h, x + w - r, y + h); s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r);
+  s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y); return s;
+}
+const P = id => PADS[id];
+
+// part groups
+const G = {};
+for (const p of PARTS) { const g = new THREE.Group(); g.userData.part = p.id; G[p.id] = g; root.add(g); }
+
+// ------------------------------------------------------------------ PCB, textured from the real Gerber data
+(function pcb() {
+  const loader = new THREE.TextureLoader();
+  const tex = f => { const t = loader.load(f); t.encoding = THREE.sRGBEncoding; t.anisotropy = 8; return t; };
+  const shape = roundedRect(46, 44, 2.5);
+  const face = (file, bottom) => {
+    const g = new THREE.ShapeGeometry(shape, 24);
+    if (bottom) g.rotateY(Math.PI);
+    const pos = g.attributes.position, uv = [];
+    for (let i = 0; i < pos.count; i++) uv.push((pos.getX(i) + 23) / 46, (pos.getY(i) + 22) / 44);
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    const m = cad(new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: tex(file), roughness: 0.5, metalness: 0.1, alphaTest: 0.5, side: THREE.FrontSide })));
+    m.position.z = bottom ? Z.pcbBot - 0.01 : Z.pcbTop + 0.01; return m;
+  };
+  G.pcb.add(face('pcb-top.png', false), face('pcb-bottom.png', true));
+  const edge = new THREE.ExtrudeGeometry(shape, { depth: 1, bevelEnabled: false, curveSegments: 24 });
+  const side = cad(new THREE.Mesh(edge, [new THREE.MeshBasicMaterial({ visible: false }), MAT.fr4]));
+  side.position.z = Z.pcbBot; G.pcb.add(side);
+  // solder fillets on every plated hole that has a part in it
+  const used = Object.keys(PADS).filter(k => !k.startsWith('U2.X') && k !== 'U2.AD0');
+  const fillet = new THREE.SphereGeometry(0.85, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2); fillet.rotateX(Math.PI / 2); fillet.scale(1, 1, 0.55);
+  for (const k of used) { const [x, y] = P(k); const f = cad(new THREE.Mesh(fillet, MAT.tin)); f.position.set(x, y, Z.pcbTop); G.pcb.add(f);
+    const b = cad(new THREE.Mesh(fillet, MAT.tin)); b.rotation.x = Math.PI; b.position.set(x, y, Z.pcbBot); G.pcb.add(b); }
+})();
+
+// ------------------------------------------------------------------ MOSFETs: TO-220 standing, tab outward
+(function mosfets() {
+  const tabShape = new THREE.Shape(); tabShape.moveTo(-5, 0); tabShape.lineTo(5, 0); tabShape.lineTo(5, 15.6 - 9.2 + 9.2); tabShape.lineTo(-5, 15.6); tabShape.lineTo(-5, 0);
+  const hole = new THREE.Path(); hole.absarc(0, 15.6 - 2.8, 1.85, 0, Math.PI * 2, true); tabShape.holes.push(hole);
+  for (const mo of MOTORS) {
+    const sx = mo.sx, c = mo.sy * 7.54, g = new THREE.Group(), base = Z.pcbTop + 3;
+    const body = box(3.1, 10, 9.2, MAT.plastic, sx * 19.65, c, base + 4.6); g.add(body);
+    // metal tab with its hole, in the y-z plane on the outer face
+    const tg = new THREE.ExtrudeGeometry(tabShape, { depth: 1.3, bevelEnabled: false, curveSegments: 20 });
+    tg.rotateX(Math.PI / 2); tg.rotateZ(Math.PI / 2);          // shape x -> y, shape y -> z, depth -> x
+    const tab = cad(new THREE.Mesh(tg, MAT.metal)); tab.position.set(sx > 0 ? 21.2 : -22.5, c, base); g.add(tab);
+    // three legs, with the wider shoulder near the body
+    for (const k of ['G', 'D', 'S']) {
+      const [x, y] = P(`Q${mo.m}.${k}`);
+      g.add(box(0.5, 0.8, base - Z.pcbBot + 1.5, MAT.tin, x, y, (Z.pcbBot - 1.5 + base) / 2));
+      g.add(box(0.5, 1.4, 1.2, MAT.tin, x, y, base - 0.6));
+    }
+    G.mosfets.add(g);
+  }
+})();
+
+// ------------------------------------------------------------------ diodes (DO-41, flat) and resistors (1/4 W, flat, 10 kΩ bands)
+function axial(a, b, bodyLen, r, bodyMat, z, bands, lead = 0.3) {
+  const [x, y1] = a, y2 = b[1], mid = (y1 + y2) / 2, dir = Math.sign(y2 - y1), g = new THREE.Group();
+  g.add(cylAxis(r, bodyLen, bodyMat, 'y', x, mid, z));
+  for (const [off, w, col] of bands) g.add(cylAxis(r + 0.03, w, M(col, { roughness: 0.5 }), 'y', x, mid + dir * off, z, 24));
+  for (const [py, end] of [[y1, mid - dir * bodyLen / 2], [y2, mid + dir * bodyLen / 2]])
+    g.add(wire([[x, py, Z.pcbBot - 1.4], [x, py, Z.pcbTop + 0.2], [x, py, z - 0.6], [x, py + (end - py) * 0.25, z], [x, end, z]], '#cfd2d6', lead));
+  return g;
+}
+for (const mo of MOTORS) {
+  const m = mo.m;
+  // cathode (stripe) on the K pad, toward the middle
+  const k = P(`D${m}.K`), a = P(`D${m}.A`), stripeOff = -(5.2 / 2 - 0.6);
+  G.diodes.add(axial(a, k, 5.2, 1.35, M('#202022', { roughness: 0.35 }), Z.pcbTop + 1.4, [[ (5.2 / 2 - 0.6), 0.9, '#c9c9c4']], 0.4));
+  // resistor: blue metal film, brown black black red brown = 10 kΩ 1 %
+  const r1 = P(`R${m}.1`), r2 = P(`R${m}.2`);
+  G.resistors.add(axial(r1, r2, 6.2, 1.15, M('#5b8fd6', { roughness: 0.5 }), Z.pcbTop + 1.2,
+    [[-2.2, 0.55, '#6b3a1e'], [-1.25, 0.55, '#111111'], [-0.3, 0.55, '#111111'], [0.65, 0.55, '#c0281f'], [2.2, 0.55, '#6b3a1e']]));
+}
+
+// ------------------------------------------------------------------ C1: 100 µF standing
+(function cap() {
+  const [xm, y] = P('C1.-'), [xp] = P('C1.+'), cx = (xm + xp) / 2, z0 = Z.pcbTop + 0.6, h = 11.2;
+  const g = G.c1;
+  g.add(cylZ(3.15, h, M('#1e3a7a', { roughness: 0.35 }), cx, y, z0, 40));
+  const stripe = new THREE.CylinderGeometry(3.17, 3.17, h - 0.6, 40, 1, true, Math.PI * 0.75, Math.PI * 0.5); stripe.rotateX(Math.PI / 2);
+  const s = cad(new THREE.Mesh(stripe, M('#b9c2d4', { roughness: 0.4, side: THREE.DoubleSide }))); s.position.set(cx, y, z0 + h / 2); g.add(s);
+  g.add(cylZ(2.95, 0.15, MAT.metal, cx, y, z0 + h, 40));
+  for (const r of [0, Math.PI / 2]) { const v = box(5, 0.25, 0.12, MAT.black, cx, y, z0 + h + 0.17); v.rotation.z = r; g.add(v); }
+  for (const px of [xm, xp]) g.add(box(0.5, 0.5, 2.4, MAT.tin, px, y, Z.pcbTop - 0.4));
+})();
+
+// ------------------------------------------------------------------ MPU6050 on its header (GY-521)
+(function mpu() {
+  const g = G.mpu, y0 = 16.0, sp = Z.pcbTop + 2.5, bz = sp + 0.8;
+  g.add(box(20.3, 2.5, 2.5, MAT.plastic, 0, y0, Z.pcbTop + 1.25));
+  for (let i = 0; i < 8; i++) g.add(box(0.64, 0.64, 9.5, MAT.gold, -8.89 + 2.54 * i, y0, Z.pcbBot - 1.4 + 4.75));
+  const board = box(21.2, 16.4, 1.6, MAT.blueMask, 0, y0 - 6.9, sp + 0.8 + 0.8); g.add(board);
+  const top = sp + 2.4;
+  g.add(box(4, 4, 0.9, MAT.black, 0, y0 - 8.6, top + 0.45));                   // MPU6050 QFN
+  g.add(box(1.6, 2.9, 1.1, MAT.black, -6.5, y0 - 9.5, top + 0.55));             // 3.3 V regulator
+  g.add(box(1.6, 0.8, 0.5, M('#33d16b', { emissive: '#1a7a3c', emissiveIntensity: 0.5 }), 6.6, y0 - 4.5, top + 0.25)); // power LED
+  for (const [x, y] of [[-3.5, -12.6], [3.5, -12.6], [-6.4, -6], [4.8, -8.5], [-3.6, -5.2], [2.8, -5.2]])
+    g.add(box(1.6, 0.8, 0.8, M('#9c7a4a', { roughness: 0.5 }), x, y0 + y + 0.0, top + 0.4));
+  for (const x of [-7.6, 7.6]) { const ring = new THREE.Mesh(new THREE.RingGeometry(1.5, 2.3, 24), MAT.gold); ring.position.set(x, y0 - 13.2, top + 0.01); g.add(ring);
+    const hole = new THREE.Mesh(new THREE.CircleGeometry(1.5, 24), MAT.black); hole.position.set(x, y0 - 13.2, top + 0.012); g.add(hole); }
+})();
+
+// ------------------------------------------------------------------ TPS63020 module on foam, three wires, EN bridge
+(function tps() {
+  const g = G.tps, cy = -8.2, z0 = Z.pcbTop;
+  g.add(box(17, 10, 1.2, MAT.foam, 0, cy, z0 + 0.6));
+  g.add(box(18, 11, 1.2, M('#6b3fa0', { roughness: 0.45 }), 0, cy, z0 + 1.2 + 0.6));
+  const t = z0 + 2.4;
+  g.add(box(4.2, 4.2, 2.0, M('#4a4d52', { roughness: 0.6 }), 2.5, cy + 0.5, t + 1.0));           // inductor
+  g.add(box(3, 2.5, 0.8, MAT.black, -2.5, cy + 1.2, t + 0.4));                                  // TPS63020 QFN
+  for (const [x, y] of [[-5.5, 2.5], [-5.5, -1.5], [6.5, 2.5], [6.5, -2]]) g.add(box(2, 1.25, 1.1, M('#a68a5a'), x, cy + y, t + 0.55));
+  const pads = { VIN: [-6, -4.6], GND: [-1, -4.6], VOUT: [4, -4.6], EN: [-6, 4.4] };
+  for (const [x, y] of Object.values(pads)) g.add(box(1.6, 1.0, 0.1, MAT.tin, x, cy + y, t + 0.05));
+  g.add(wire([[-6, cy - 4.6, t + 0.2], [-7.5, cy, t + 1.2], [-6, cy + 4.4, t + 0.2]], '#cfd2d6', 0.25));   // EN to VIN bridge
+  const run = (from, pad, col) => { const [px, py] = P(pad); g.add(wire([[from[0], cy + from[1], t + 0.3], [from[0], cy + from[1] - 2, t + 2], [px, py + 3, Z.pcbTop + 3], [px, py, Z.pcbTop + 0.4]], col)); };
+  run(pads.VIN, 'J.IN', '#d93a2b'); run(pads.GND, 'J.TG', '#1b1b1b'); run(pads.VOUT, 'J.OUT', '#f2b134');
+})();
+
+// ------------------------------------------------------------------ screws
+for (const sx of [1, -1]) for (const sy of [1, -1]) {
+  const x = sx * 20, y = sy * 19, g = new THREE.Group();
+  g.add(cylZ(1.9, 1.3, MAT.metal, x, y, Z.pcbTop, 24));
+  for (const r of [0, Math.PI / 2]) { const s = box(2.6, 0.45, 0.6, MAT.black, x, y, Z.pcbTop + 1.15); s.rotation.z = r + Math.PI / 4; g.add(s); }
+  G.screws.add(g);
+}
+
+// ------------------------------------------------------------------ ESP32-S3 CAM board (approximate layout), camera
+(function esp() {
+  const g = G.esp, z0 = Z.esp, t = z0 + 1.6;
+  g.add(box(25, 61, 1.6, MAT.blackMask, 0, 0, z0 + 0.8));
+  // two rows of 20 plated holes along the long edges
+  const ringG = new THREE.RingGeometry(0.5, 0.85, 16), holeG = new THREE.CircleGeometry(0.5, 16);
+  for (const sx of [-1, 1]) for (let i = 0; i < 20; i++) {
+    const y = 24.13 - i * 2.54;
+    for (const [zz, flip] of [[t + 0.01, false], [z0 - 0.01, true]]) {
+      const r = new THREE.Mesh(ringG, MAT.gold); r.position.set(sx * 11.43, y, zz); if (flip) r.rotation.x = Math.PI; g.add(r);
+      const h = new THREE.Mesh(holeG, MAT.black); h.position.set(sx * 11.43, y, zz + (flip ? -0.005 : 0.005)); if (flip) h.rotation.x = Math.PI; g.add(h);
+    }
+  }
+  // ESP32-S3-WROOM-1 module: substrate, shield can, antenna strip toward the front
+  g.add(box(18, 25.5, 0.8, M('#1b2a22', { roughness: 0.5 }), 0, 6, t + 0.4));
+  g.add(box(15.8, 17.6, 2.4, MAT.metal, 0, 2.2, t + 0.8 + 1.2));
+  g.add(box(15, 5.5, 0.05, MAT.gold, 0, 16.2, t + 0.83));
+  g.add(box(9, 7.4, 3.2, MAT.metal, 0, -27.2, t + 1.6));                               // USB-C at the rear
+  g.add(box(6.5, 0.6, 2.2, MAT.black, 0, -30.6, t + 1.6));
+  for (const x of [-7.5, 7.5]) { g.add(box(3.5, 4.2, 1.5, MAT.metal, x, -19, t + 0.75)); g.add(cylZ(0.9, 0.6, MAT.black, x, -19, t + 1.5, 16)); } // BOOT, RST
+  g.add(box(2, 1.6, 1, MAT.black, 6, -12, t + 0.5)); g.add(box(1.6, 0.8, 0.5, M('#ff3b30', { emissive: '#b3140d', emissiveIntensity: 0.6 }), -6, -11, t + 0.25));
+  g.add(box(2.9, 1.6, 1.1, MAT.black, -6, -14, t + 0.55)); g.add(box(5, 5, 0.9, MAT.black, 5.5, -6, t + 0.45)); // regulator, PSRAM
+  // 24-pin camera FPC connector at the front edge
+  g.add(box(15, 4.2, 1.4, MAT.plastic, 0, 27.6, t + 0.7)); g.add(box(15.4, 1.2, 0.9, M('#6a4a2a'), 0, 29.3, t + 1.0));
+  // camera: ribbon folds forward and up, module looks forward
+  const c = G.cam;
+  const rib = new THREE.CatmullRomCurve3([[0, 29.6, t + 1.1], [0, 31.5, t + 1.4], [0, 33.2, t + 3], [0, 33.6, t + 5.5]].map(p => new THREE.Vector3(...p)));
+  const ribGeo = new THREE.TubeGeometry(rib, 24, 0.12, 3, false);
+  for (let i = -5; i <= 5; i++) { const m = new THREE.Mesh(ribGeo, M('#c46b16', { roughness: 0.5 })); m.position.x = i * 0.75; c.add(cad(m)); }
+  c.add(box(8.5, 1, 8.5, MAT.blackMask, 0, 34.2, t + 7.5));
+  c.add(box(8, 4, 8, MAT.plastic, 0, 36.7, t + 7.5));
+  c.add(cylAxis(3.4, 3.5, MAT.plastic, 'y', 0, 40.4, t + 7.5, 32));
+  const lens = cylAxis(2.4, 0.4, M('#1b2236', { roughness: 0.05, metalness: 0.6 }), 'y', 0, 42.2, t + 7.5, 32); c.add(lens);
+})();
+
+// ------------------------------------------------------------------ wires: ESP32 signals, motor leads, battery pigtail
+for (const [pad, , , col, side, ty] of ESPW) {
+  const [px, py] = P(pad), tx = side * 11.43;
+  G.espwires.add(wire([[px, py, Z.pcbBot - 1.2], [px, py, Z.pcbTop + 2.5], [px + (tx - px) * 0.35, py + 0.4, Z.pcbTop + 7], [tx, ty, Z.esp - 3], [tx, ty, Z.esp + 2.1]], col, 0.32));
+}
+for (const mo of MOTORS) {
+  const mx = mo.sx * MC, my = mo.sy * MC;
+  ['+', '-'].forEach((s, i) => {
+    const [px, py] = P(`M${mo.m}${s}`), off = (i ? -0.7 : 0.7);
+    G.wires.add(wire([[mx + off * 0.5, my, Z.motor + 0.5], [mx + off * 0.5, my, -0.6], [mx * 0.82, my * 0.82 + off, -1.2], [px, py, -1.2], [px, py, Z.pcbBot - 0.5], [px, py, Z.pcbTop + 0.9]], mo.wires[i], 0.38));
+  });
+}
+['BAT+', 'BAT-'].forEach((pad, i) => {
+  const [px, py] = P(pad), col = i ? '#1b1b1b' : '#d93a2b';
+  G.wires.add(wire([[-4 - i * 2.2, -20, -3.2], [-5 - i * 2.2, -25, -3], [px, -25.5, -1], [px, -24, 2.5], [px, py, Z.pcbBot - 1], [px, py, Z.pcbTop + 0.9]], col, 0.45));
+});
+G.wires.add(box(5.6, 2.8, 4.2, M('#f1efe6', { roughness: 0.6 }), -7.5, -25.6, -0.6));          // JST plug on the pigtail
+
+// ------------------------------------------------------------------ battery and strap
+(function battery() {
+  const g = G.battery;
+  const pouch = new THREE.ExtrudeGeometry(roundedRect(20, 40, 1.6), { depth: 6.4, bevelEnabled: true, bevelThickness: 0.3, bevelSize: 0.3, bevelSegments: 2 });
+  const b = cad(new THREE.Mesh(pouch, M('#aab4c4', { roughness: 0.35, metalness: 0.3 }))); b.position.set(0, 0, -6.7); g.add(b);
+  g.add(box(19.4, 22, 0.1, M('#c8432d', { roughness: 0.6 }), 0, 3, -0.02));                     // label on the top face
+  g.add(box(19.4, 22, 0.1, M('#c8432d', { roughness: 0.6 }), 0, 3, -7.0));
+  g.add(box(14, 3, 1.2, M('#e8dfc4', { roughness: 0.7 }), 0, -20.6, -3.4));                       // protection PCB end, tape
+  const s = G.strap, sm = M('#2d2d2f', { roughness: 0.95 });
+  s.add(box(10, 46, 0.8, sm, 0, 0, -7.7));
+  for (const sy of [1, -1]) { s.add(box(10, 0.8, 9.6, sm, 0, sy * 23.4, -2.9)); s.add(box(10, 3.4, 0.8, sm, 0, sy * 24.75, 2.0)); s.add(box(10, 0.8, 3, sm, 0, sy * 26.4, 0.7)); }
+})();
+
+// ------------------------------------------------------------------ motors and props
+const propSpinners = [];
+function blade(dir, mat) {
+  const s = new THREE.Shape();
+  const half = x => x < 9 ? 2.2 + (x - 2.5) * 0.2 : 3.5 - (x - 9) * 0.07;   // half-chord along the blade
+  s.moveTo(2.5, -half(2.5));
+  for (let x = 3; x <= 25.5; x += 0.5) s.lineTo(x, -half(x) * (x < 12 ? 1.1 : 1));
+  s.quadraticCurveTo(27.6, -1.6, 27.5, 0.4); s.quadraticCurveTo(27.2, 2.2, 25.5, half(25.5));
+  for (let x = 25; x >= 2.5; x -= 0.5) s.lineTo(x, half(x) * 0.85);
+  const g = new THREE.ExtrudeGeometry(s, { depth: 0.45, bevelEnabled: false, curveSegments: 10 });
+  g.translate(0, 0, -0.225);
+  const pos = g.attributes.position;                       // twist: steep at the root, flatter at the tip
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i), a = dir * THREE.MathUtils.degToRad(26 - 15 * Math.min(1, (x - 2.5) / 25));
+    pos.setY(i, y * Math.cos(a) - z * Math.sin(a)); pos.setZ(i, y * Math.sin(a) + z * Math.cos(a));
+  }
+  g.computeVertexNormals();
+  return cad(new THREE.Mesh(g, mat));
+}
+for (const mo of MOTORS) {
+  const x = mo.sx * MC, y = mo.sy * MC, g = new THREE.Group();
+  g.add(cylZ(4.25, 18.2, M('#cfd2d6', { roughness: 0.25, metalness: 0.5 }), x, y, Z.motor + 1.6, 40));
+  g.add(cylZ(4.25, 1.6, MAT.black, x, y, Z.motor, 40));                                   // plastic end cap
+  g.add(cylZ(3.6, 0.3, M('#9da1a7', { roughness: 0.3, metalness: 0.5 }), x, y, Z.motorTop - 0.2, 40));
+  g.add(cylZ(1.1, 0.7, MAT.brass, x, y, Z.motorTop, 20));                                   // bearing bush
+  g.add(cylZ(0.4, 4.5, MAT.metal, x, y, Z.motorTop, 12));                                   // shaft
+  for (let k = 0; k < 6; k++) { const v = box(0.4, 1.6, 0.1, MAT.black, x + 3.3 * Math.cos(k * Math.PI / 3), y + 3.3 * Math.sin(k * Math.PI / 3), Z.motor + 1.62); v.rotation.z = k * Math.PI / 3; g.add(v); }
+  G.motors.add(g);
+  // prop: hub + two twisted blades
+  const pg = new THREE.Group(); pg.position.set(x, y, Z.prop);
+  const dir = mo.spin === 'CCW' ? 1 : -1, mat = M(mo.spin === 'CCW' ? '#ecebe5' : '#2a2a2c', { roughness: 0.35, transparent: true, opacity: 0.94 });
+  const hub = cylZ(2.6, 4, mat, 0, 0, -2.4, 24); pg.add(hub);
+  const b1 = blade(dir, mat), b2 = blade(dir, mat); b2.rotation.z = Math.PI; pg.add(b1, b2);
+  pg.rotation.z = mo.m * 0.7;
+  pg.userData.dir = dir; propSpinners.push(pg); G.props.add(pg);
+}
+
+// ------------------------------------------------------------------ the printed frame (real mesh, from frame/out/frame.stl)
+fetch('frame.json').then(r => r.json()).then(({ v, i }) => {
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); geo.setIndex(i);
+  const flat = geo.toNonIndexed(); flat.computeVertexNormals();          // flat shading keeps the printed edges crisp
+  const m = cad(new THREE.Mesh(flat, MAT.pla));
+  G.frame.add(m);
+  document.getElementById('loading').remove();
+  prepareMaterials(G.frame);
+}).catch(() => { document.getElementById('loading').textContent = 'Could not load the frame model.'; });
+
+// ------------------------------------------------------------------ per-part materials so highlights stay local
+function prepareMaterials(group) {
+  group.traverse(o => { if (o.isMesh) {
+    o.material = Array.isArray(o.material) ? o.material.map(m => m.clone()) : o.material.clone();
+    const ms = Array.isArray(o.material) ? o.material : [o.material];
+    ms.forEach(m => { if (m.emissive) m.userData.baseEmissive = m.emissive.clone(); m.userData.baseIntensity = m.emissiveIntensity || 1; });
+  } });
+}
+for (const id in G) if (id !== 'frame') prepareMaterials(G[id]);
+
+// ------------------------------------------------------------------ views, explode, visibility
+const VIEWS = {
+  iso: { pos: [95, 76, -106], tgt: [0, 10, 0] },
+  board: { pos: [40, 58, -50], tgt: [0, 6, -1] },
+  rear: { pos: [34, 46, 62], tgt: [0, 8, 10] },
+  front: { pos: [-50, 50, -92], tgt: [0, 18, -10] },
+  top: { pos: [0, 175, 0.01], tgt: [0, 0, 0] },
+  below: { pos: [80, -85, -105], tgt: [0, 0, 0] },
+};
+let tween = null;
+function fly(name, dur = 800) {
+  const v = VIEWS[name]; if (!v) return;
+  tween = { t0: performance.now(), dur, p0: camera.position.clone(), t0v: controls.target.clone(), p1: new THREE.Vector3(...v.pos), t1: new THREE.Vector3(...v.tgt) };
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) tween.dur = 1;
+}
+camera.position.set(...VIEWS.iso.pos); controls.target.set(...VIEWS.iso.tgt);
+
+let explode = 0, explodeTarget = 0, espOn = true, spin = true, labelsOn = false;
+const visibleSet = new Set(PARTS.map(p => p.id));
+function applyVisibility() {
+  for (const p of PARTS) {
+    let v = visibleSet.has(p.id);
+    if ((p.id === 'esp' || p.id === 'cam' || p.id === 'espwires') && !espOn) v = false;
+    if (p.ex === null && explode > 0.02) v = false;           // wires hide while exploded
+    G[p.id].visible = v;
+  }
+}
+function applyExplode() { for (const p of PARTS) G[p.id].position.z = (p.ex || 0) * explode; }
+
+let selected = [];
+function highlight(ids) {
+  selected = ids;
+  for (const p of PARTS) G[p.id].traverse(o => { if (!o.isMesh) return; (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => {
+    if (!m.emissive) return;
+    if (ids.includes(p.id)) { m.emissive.set('#b8321f'); m.emissiveIntensity = 0.35; }
+    else { m.emissive.copy(m.userData.baseEmissive || new THREE.Color(0)); m.emissiveIntensity = m.userData.baseIntensity ?? 1; }
+  }); });
+  document.querySelectorAll('.part').forEach(b => b.classList.toggle('on', ids.includes(b.dataset.id)));
+}
+
+const infoName = document.getElementById('info-name'), infoW = document.getElementById('info-weight'), infoRole = document.getElementById('info-role'), infoChg = document.getElementById('info-chg');
+function showPart(id) {
+  const p = byId[id]; if (!p) return;
+  infoName.textContent = p.name; infoW.textContent = `${p.g.toFixed(1)} g · ${p.sub.toLowerCase()}`; infoRole.textContent = p.role;
+  infoChg.hidden = !p.chg; infoChg.textContent = p.chg ? 'Rev B: ' + p.chg : '';
+  highlight([id]);
+}
+
+// ------------------------------------------------------------------ guide
+let step = -1;
+const gnav = document.getElementById('gnav'), btnGuide = document.getElementById('btn-guide');
+const stepsEl = document.getElementById('steps');
+stepsEl.innerHTML = STEPS.map((s, i) => `<li><button type="button" data-step="${i}">${s.t}<small>${s.d}</small></button></li>`).join('');
+function setStep(i) {
+  step = Math.max(0, Math.min(STEPS.length - 1, i));
+  const s = STEPS[step];
+  visibleSet.clear(); s.show.forEach(id => visibleSet.add(id));
+  explodeTarget = 0; setPressed('btn-explode', false);
+  applyVisibility(); highlight(s.hi); fly(s.view);
+  infoName.textContent = `Step ${step + 1} of ${STEPS.length}: ${s.t}`; infoW.textContent = ''; infoRole.textContent = s.d; infoChg.hidden = true;
+  gnav.hidden = false; document.getElementById('g-bar').style.width = `${(step + 1) / STEPS.length * 100}%`;
+  document.getElementById('g-next').textContent = step === STEPS.length - 1 ? 'Done' : 'Next';
+  stepsEl.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.step === step));
+  setPressed('btn-guide', true);
+}
+function endGuide() {
+  step = -1; gnav.hidden = true; setPressed('btn-guide', false);
+  visibleSet.clear(); PARTS.forEach(p => visibleSet.add(p.id)); applyVisibility(); highlight([]);
+  stepsEl.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+  infoName.textContent = 'Tap any part'; infoW.textContent = ''; infoRole.textContent = 'Drag to rotate, scroll or pinch to zoom, right-drag to pan.';
+}
+stepsEl.addEventListener('click', e => { const b = e.target.closest('button[data-step]'); if (b) { setStep(+b.dataset.step); stage.scrollIntoView({ behavior: 'smooth', block: 'center' }); } });
+document.getElementById('g-next').onclick = () => step === STEPS.length - 1 ? endGuide() : setStep(step + 1);
+document.getElementById('g-prev').onclick = () => setStep(step - 1);
+
+// ------------------------------------------------------------------ buttons
+function setPressed(id, on) { document.getElementById(id).setAttribute('aria-pressed', on ? 'true' : 'false'); }
+btnGuide.onclick = () => step >= 0 ? endGuide() : setStep(0);
+document.getElementById('btn-explode').onclick = () => { if (step >= 0) endGuide(); explodeTarget = explodeTarget ? 0 : 1; setPressed('btn-explode', !!explodeTarget); fly(explodeTarget ? 'iso' : 'iso'); };
+document.getElementById('btn-board').onclick = () => { espOn = false; setPressed('btn-esp', false); applyVisibility(); fly('board'); };
+document.getElementById('btn-top').onclick = () => fly('top');
+document.getElementById('btn-below').onclick = () => fly('below');
+document.getElementById('btn-esp').onclick = () => { espOn = !espOn; setPressed('btn-esp', espOn); applyVisibility(); };
+document.getElementById('btn-spin').onclick = () => { spin = !spin; setPressed('btn-spin', spin); };
+document.getElementById('btn-labels').onclick = () => { labelsOn = !labelsOn; setPressed('btn-labels', labelsOn); labelsEl.hidden = !labelsOn; };
+document.getElementById('btn-reset').onclick = () => { endGuide(); explodeTarget = 0; setPressed('btn-explode', false); espOn = true; setPressed('btn-esp', true); applyVisibility(); fly('iso'); };
+plist.addEventListener('click', e => { const b = e.target.closest('.part'); if (!b) return; if (step >= 0) endGuide(); showPart(b.dataset.id); });
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) { spin = false; setPressed('btn-spin', false); }
+
+// picking
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+let down = null;
+renderer.domElement.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener('pointerup', e => {
+  if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) return;
+  const r = renderer.domElement.getBoundingClientRect();
+  ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const hits = ray.intersectObjects(root.children, true).filter(h => { let o = h.object; while (o) { if (!o.visible) return false; o = o.parent; } return true; });
+  if (!hits.length) return;
+  let o = hits[0].object; while (o && !o.userData.part) o = o.parent;
+  if (o) { if (step >= 0) endGuide(); showPart(o.userData.part); }
+});
+
+// ------------------------------------------------------------------ labels
+const LABELS = [
+  ['M1 · CCW', [MC, MC, Z.prop + 2]], ['M2 · CW', [MC, -MC, Z.prop + 2]], ['M3 · CCW', [-MC, -MC, Z.prop + 2]], ['M4 · CW', [-MC, MC, Z.prop + 2]],
+  ['Front', [0, 46, 30]], ['ESP32-S3 CAM', [0, -4, Z.esp + 5]], ['MOSFETs', [20, 7.5, 24.5]], ['MPU6050', [0, 9, 11]], ['TPS63020', [0, -8, 9]],
+  ['C1', [6.9, -18.5, 17.5]], ['Battery', [0, 0, -8]], ['ESP32 bridge', [7.5, -24.75, 15]], ['Wire pads', [0, 20.2, 7]],
+];
+const labelsEl = document.getElementById('labels');
+const labelEls = LABELS.map(([t]) => { const s = document.createElement('span'); s.textContent = t; labelsEl.appendChild(s); return s; });
+const tmp = new THREE.Vector3();
+function updateLabels(w, h) {
+  LABELS.forEach(([, p], i) => {
+    tmp.set(...p); root.localToWorld(tmp); tmp.project(camera);
+    const el = labelEls[i], vis = tmp.z < 1 && Math.abs(tmp.x) < 1.05 && Math.abs(tmp.y) < 1.05;
+    el.style.display = vis ? '' : 'none';
+    if (vis) { el.style.left = `${(tmp.x + 1) / 2 * w}px`; el.style.top = `${(1 - tmp.y) / 2 * h}px`; }
+  });
+}
+
+// ------------------------------------------------------------------ loop
+function resize() {
+  const w = renderer.domElement.clientWidth, h = renderer.domElement.clientHeight;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage); resize();
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (tween) {
+    const k = Math.min(1, (now - tween.t0) / tween.dur), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    camera.position.lerpVectors(tween.p0, tween.p1, e); controls.target.lerpVectors(tween.t0v, tween.t1, e);
+    if (k >= 1) tween = null;
+  }
+  if (Math.abs(explode - explodeTarget) > 0.001) { explode += (explodeTarget - explode) * Math.min(1, dt * 6); if (Math.abs(explode - explodeTarget) < 0.002) explode = explodeTarget; applyExplode(); applyVisibility(); }
+  if (spin) for (const p of propSpinners) p.rotation.z += p.userData.dir * dt * 7;
+  if (selected.length) { const s = 0.22 + 0.16 * Math.sin(now / 260);
+    for (const id of selected) G[id].traverse(o => { if (o.isMesh) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if (m.emissive) m.emissiveIntensity = s; }); }); }
+  controls.update();
+  renderer.render(scene, camera);
+  if (labelsOn) updateLabels(renderer.domElement.clientWidth, renderer.domElement.clientHeight);
+  requestAnimationFrame(frame);
+}
+applyVisibility();
+requestAnimationFrame(frame);
+})();
+</script>

@@ -32,7 +32,7 @@ See `docs/parts.md` and `docs/wiring.md`. Key points:
 - `frame/` — printed frame for rev B: frame/gen_frame.py (manifold3d) writes frame/out/frame.stl and checks clearances; frame/render_frame.py renders pictures in Blender
 - `pcb/fc/` — rev B flight-controller board: generator, Gerbers in pcb/fc/out/, ordering + assembly in pcb/fc/README.md
 - `pcb/` — rev A X-shaped PCB frame (no longer used) and the shared KiCad exporter
-- `docs/` — parts list, wiring, parts page
+- `docs/` — parts list, wiring, parts page, 3D model pages (drone-3d = perfboard version, drone-3d-revb = current)
 
 ## Shared links
 
@@ -51,7 +51,7 @@ As of 2026-10-26:
 - **Not started:** the brain model (Phase 1), webcam pipeline, firmware, assembly.
 - **Open questions:** ESP-Drone's expected motor order and spin directions (must match M1 CCW front-right, M2 CW rear-right, M3 CCW rear-left, M4 CW front-left, or remap in firmware); the ESP32 board's real pinout (send a photo of its silkscreen); measured weights and thrust.
 - **GitHub:** https://github.com/akhleif-pixel/fly-brain-drone (public). Collaborators: AhmedDoesCS, JaviMARS86 (role not set).
-- **Other shared pages:** 3D build model + 23-step guide https://claude.ai/artifact/NjziEZUPGjHmvTMsy9SgBu (perfboard version; the PCB version is in pcb/README.md).
+- **Other shared pages:** rev B 3D model + 12-step build guide + what changed https://claude.ai/artifact/K79XjH3TgBpPCP4Wgf5wmB (source docs/drone-3d-revb/; rebuild its PCB textures and frame mesh with make_assets.py after any board or frame change, then republish). Old perfboard 3D model https://claude.ai/artifact/NjziEZUPGjHmvTMsy9SgBu (outdated).
 
 ## Safety
 
