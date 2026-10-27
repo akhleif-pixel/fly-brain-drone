@@ -12,7 +12,7 @@ part heights. Coordinates are mm: x to the right, y toward the front, z up from 
 What it holds:
   - four 8520 motors in clip tubes at the ends of an X, 95 mm motor to motor across the diagonal
   - the PCB on four posts with M2 holes (screw straight into the plastic)
-  - the ESP32 on two bridges just outside the PCB's front and rear edges
+  - the ESP32 on two bridges just outside the PCB's front and rear edges, their tops reaching in under its ends
   - the battery underneath, with a strap over the front and rear crossbars
 """
 import math, os
@@ -33,7 +33,9 @@ PCB_W, PCB_H, PCB_T = 46.0, 44.0, 1.0
 PCB_HOLES = [(sx * 20.0, sy * 19.0) for sx in (1, -1) for sy in (1, -1)]
 MOSFET_H = 18.5              # IRLB8721 standing, body + tab + lead stand-off
 MOSFET_BOX = (17.8, 22.6, 2.4, 12.6)  # |x| and |y| range of each upright MOSFET
-ESP_W, ESP_L = 25.0, 61.0    # ESP32-S3 CAM board, approximate
+ESP_W = 28.5                 # ESP32-S3 WROOM CAM board, measured from a photo: 28.5 x 51 mm,
+ESP_Y = (-25.2, 25.8)        # USB-C end at the rear; the module's antenna overhangs the front by 7 mm
+ESP_ROWS = 12.7              # its two pin rows are 25.4 mm apart
 BATTERY = (20.0, 40.0, 7.0)  # w (x), l (y), thickness
 
 # ---------------------------------------------------------------- frame parameters
@@ -50,7 +52,9 @@ ESP_Z = POST_H + PCB_T + 14.0  # ESP32 underside: 14 mm above the PCB, clears C1
 BRIDGE_Y = 24.75             # center of the ESP32 bridges, just outside the PCB (edge at 22)
 BRIDGE_X = 7.5               # bridge legs at +-BRIDGE_X; the strap runs between them
 BRIDGE_LEG = (3.0, 2.5)      # leg cross-section, x by y
-BAR_W = 2.5                  # crossbar width (y)
+BAR_W = 2.5                  # bottom crossbar width (y)
+# top bars reach in under the ESP32's ends so it rests on 4 mm at the front and 2.7 mm at the rear
+TOP_BAR = {1: (21.5, 26.0), -1: (-26.0, -22.5)}    # y range; the rear one stays behind C1 (to -21.65)
 
 def box(x0, x1, y0, y1, z0, z1):
     return Manifold.cube((x1 - x0, y1 - y0, z1 - z0)).translate((x0, y0, z0))
@@ -89,7 +93,7 @@ for sy in (1, -1):
     parts.append(box(-BRIDGE_X - lx / 2, BRIDGE_X + lx / 2, yc - BAR_W / 2, yc + BAR_W / 2, 0, T))
     for sx in (1, -1):
         parts.append(box(sx * BRIDGE_X - lx / 2, sx * BRIDGE_X + lx / 2, yc - ly / 2, yc + ly / 2, 0, ESP_Z))
-    parts.append(box(-BRIDGE_X - lx / 2, BRIDGE_X + lx / 2, yc - BAR_W / 2, yc + BAR_W / 2, ESP_Z - T, ESP_Z))
+    parts.append(box(-BRIDGE_X - lx / 2, BRIDGE_X + lx / 2, *TOP_BAR[sy], ESP_Z - T, ESP_Z))
 # motor tubes
 TUBE_OD = TUBE_ID + 2 * TUBE_WALL
 for sx, sy in corners:
@@ -149,6 +153,10 @@ need(d_rib >= 0.5, f"arm rib to board corner: {d_rib:.1f} mm (want >= 0.5)")
 # ESP32 bridges clear the board edge and the front pads' wires (pads at y = 20.2)
 need(BRIDGE_Y - BAR_W / 2 - PCB_H / 2 >= 1.0, f"bridge to board edge: {BRIDGE_Y - BAR_W / 2 - PCB_H / 2:.1f} mm")
 need(ESP_Z - pcb_top >= 13, f"ESP32 underside above the PCB: {ESP_Z - pcb_top:.1f} mm (C1 is about 12 mm tall)")
+front_rest, rear_rest = min(ESP_Y[1], TOP_BAR[1][1]) - TOP_BAR[1][0], TOP_BAR[-1][1] - max(ESP_Y[0], TOP_BAR[-1][0])
+need(min(front_rest, rear_rest) >= 2.5, f"ESP32 rests on the bridges: {front_rest:.1f} mm front, {rear_rest:.1f} mm rear (want >= 2.5)")
+need(ESP_ROWS - (BRIDGE_X + BRIDGE_LEG[0] / 2) >= 2.0, f"bridge tops to the ESP32's pin rows: {ESP_ROWS - BRIDGE_X - BRIDGE_LEG[0] / 2:.1f} mm (room for solder joints)")
+need(TOP_BAR[1][0] - 21.0 >= 0.5, f"front bridge top to the front pads: {TOP_BAR[1][0] - 21.0:.1f} mm (wires go up from there)")
 need(2 * BRIDGE_X - BRIDGE_LEG[0] >= 10.5, f"room for the battery strap between bridge legs: {2 * BRIDGE_X - BRIDGE_LEG[0]:.1f} mm (10 mm strap)")
 need(MOTOR_L - (TUBE_H - SEAT_Z) >= 8, f"motor held over {TUBE_H - SEAT_Z:.0f} mm of its {MOTOR_L:.0f} mm")
 need(POST_H - T >= 2.0, f"room under the PCB for trimmed leads above the beams: {POST_H - T:.1f} mm (trim leads to 1.5 mm)")

@@ -46,8 +46,12 @@ Front pads, left to right: G4, G3, 3V3, SCL, SDA, GND, INT, G2, G1. Rear pads, l
 9. Short wires from the front pads up to the ESP32's pins.
 10. Props off: check the spin directions. If a motor spins the wrong way, swap its two wires.
 
-## Not checked yet
+## Checked against the real parts (photos with a ruler, 2026-10-26)
 
-- The printed frame doesn't exist yet. It needs four M2 posts at ±20 mm × ±19 mm (40 × 38 mm apart), motor mounts, a battery holder and a way to hold the ESP32 above the board.
-- The real parts haven't been measured against the footprints (TPS63020 ≤ 20 × 12 mm, GY-521 pin order, MOSFET legs ≤ 1.1 mm).
-- The ESP32's pinout is still unconfirmed, which is why it is wired from pads.
+- **IRLB8721:** genuine IR part, about 10.5 × 16.6 mm. The MOSFET holes are 1.2 mm so any TO-220 leg fits.
+- **GY-521:** pins VCC GND SCL SDA XDA XCL AD0 INT, matching the board. Its header is already soldered on.
+- **ESP32-S3 WROOM CAM board:** about 28.5 × 51 mm plus a 7 mm antenna overhang, two rows of 20 pins 25.4 mm apart. Its printed labels include every pin in our plan (GPIO 21, 47, 14, 38, 42, 41, 40, 3V3, GND).
+- **8520 motors:** about 8.3 mm across, 20 mm long; CW motors have red/blue leads, CCW white/black.
+- **TPS63020 module: about 27.5 × 18.7 mm. It does NOT fit the 20 × 12 mm outline on this board** (the outline is boxed in by the MPU6050 and the resistors). It needs a new spot before ordering. Its pins: GND and VIN at one end, GND and OUT at the other, EN and PS on one long edge, and solder pads to pick 3.3 V, 4.2 V or 5 V. **Bridge the 3V3 pad and measure the output before connecting anything.**
+
+The printed frame is in [frame/](../../frame/README.md).

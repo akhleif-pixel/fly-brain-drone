@@ -1,6 +1,14 @@
 # Wiring
 
-Pin numbers follow the common ESP32-S3 CAM map. Check them against the pinout picture on the board's listing before soldering.
+Pin numbers follow the common ESP32-S3 CAM map. Checked on 2026-10-26 against the labels printed on our board (photo of the ESP32-S3 WROOM CAM board): every pin used below is on its headers.
+
+Its two 20-pin rows, read with the antenna at the top (the front of the drone):
+
+| Left row | 3V3, EN, 4, 5, 6, 7, 15, 16, 17, 18, 8, 3, 46, 9, 10, 11, 12, 13, 14, 5V |
+| --- | --- |
+| Right row | TX, RX, 1, 2, 42, 41, 40, 39, 38, 37, 36, 35, 0, 45, 48, 47, 21, 20, 19, GND |
+
+GPIO 48 drives the board's RGB LED.
 
 ## Power
 

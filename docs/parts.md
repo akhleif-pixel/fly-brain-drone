@@ -18,4 +18,6 @@ AliExpress cart, October 5, 2026: 13 items, $43.31, free shipping, expected Octo
 | 28 AWG silicone wire, red, 3 m | $1.43 | ~1 m | |
 | Perfboard 4 × 6 cm ×5 | $1.85 | 1 | Motor driver board |
 
+Measured from photos with a ruler (2026-10-26): ESP32 board about 28.5 × 51 mm plus a 7 mm antenna overhang; TPS63020 module about 27.5 × 18.7 mm; IRLB8721 about 10.5 × 16.6 mm (genuine IR); motors about 8.3 × 20 mm; battery about 40 × 24 mm with a small white 2-pin plug.
+
 Already owned: battery charger (check charge current ≤500 mA), 25 V 100 µF capacitors, 1N4002 diodes (bench tests only — too slow for 20 kHz PWM), soldering iron, 3D printing.

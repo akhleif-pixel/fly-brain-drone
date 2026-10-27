@@ -90,9 +90,9 @@ for ch in CH:
     c = sy * QC
     gy = c + 2.54 * sx
     ch.update(gy=gy, sy_src=c - 2.54 * sx)
-    G = pad(f"Q{m}.G", f"GATE{m}", sx * QX, gy, 1.9, 1.1)
-    D = pad(f"Q{m}.D", f"DRAIN{m}", sx * QX, c, 1.9, 1.1)
-    S = pad(f"Q{m}.S", "GND", sx * QX, c - 2.54 * sx, 1.9, 1.1, spoke=0.8)
+    G = pad(f"Q{m}.G", f"GATE{m}", sx * QX, gy, 1.9, 1.2)
+    D = pad(f"Q{m}.D", f"DRAIN{m}", sx * QX, c, 1.9, 1.2)
+    S = pad(f"Q{m}.S", "GND", sx * QX, c - 2.54 * sx, 1.9, 1.2, spoke=0.8)
     # motor pads near the corner
     MP = pad(f"M{m}+", "VBAT", sx * 13.0, sy * 19.6, 2.2, 1.0, spoke=0.8)
     MN = pad(f"M{m}-", f"DRAIN{m}", sx * 16.0, sy * 19.6, 2.2, 1.0)

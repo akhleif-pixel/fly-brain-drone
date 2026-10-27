@@ -1,6 +1,6 @@
 # Frame
 
-One-piece printed frame for the rev B flight-controller board ([pcb/fc](../pcb/fc/README.md)). It weighs about 5.6 g in PLA and measures 78 × 78 × 19 mm, with motors 95 mm apart across the diagonal.
+One-piece printed frame for the rev B flight-controller board ([pcb/fc](../pcb/fc/README.md)). It weighs about 5.7 g in PLA and measures 78 × 78 × 19 mm, with motors 95 mm apart across the diagonal.
 
 ![Frame](out/frame.png)
 ![With the parts in place](out/assembly.png)
@@ -31,6 +31,6 @@ Regenerate the STL with `pcb/.venv/Scripts/python frame/gen_frame.py`. It prints
 
 ## Not checked yet
 
-- The ESP32's real size and how it sits on the bridges (assumed 25 × 61 mm).
+- The ESP32 is 28.5 × 51 mm (measured from a photo). The bridge tops reach in under its ends, so it rests on 4.3 mm at the front and 2.7 mm at the rear; foam tape or a rubber band holds it. Check with the real board.
 - Real weights and thrust.
 - No prop guards or landing feet yet: it lands on the battery strap.

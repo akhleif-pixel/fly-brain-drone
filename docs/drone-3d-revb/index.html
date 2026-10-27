@@ -124,7 +124,7 @@ td.mono { font-family: var(--font-mono); font-size: 12.5px; white-space: nowrap;
     <div class="facts">
       <span>Motor to motor <b>95 mm</b></span>
       <span>Board <b>46 × 44 mm</b>, 4.7 g</span>
-      <span>Frame <b>78 × 78 mm</b>, 5.6 g PLA</span>
+      <span>Frame <b>78 × 78 mm</b>, 5.7 g PLA</span>
       <span>Weight <b>~66–76 g</b> estimated</span>
     </div>
   </header>
@@ -181,7 +181,7 @@ td.mono { font-family: var(--font-mono); font-size: 12.5px; white-space: nowrap;
       <div class="rev now">
         <span class="when">Rev B · now</span>
         <h3>46 × 44 mm board in a printed frame</h3>
-        <p>A small flight-controller board on four posts in a 5.6 g printed X. Designed and checked, not ordered or printed yet.</p>
+        <p>A small flight-controller board on four posts in a 5.7 g printed X. Designed and checked, not ordered or printed yet.</p>
       </div>
     </div>
     <div class="diff" id="diff"></div>
@@ -196,7 +196,7 @@ td.mono { font-family: var(--font-mono); font-size: 12.5px; white-space: nowrap;
 
   <section class="panel">
     <h2>Pads on the board</h2>
-    <p>The silkscreen has no text yet; Ayham is adding labels in KiCad. Front row, left to right: G4, G3, 3V3, SCL, SDA, GND, INT, G2, G1. Rear row: BAT+ (square), BAT−, OUT, GND, IN, then C1. The ESP32's pinout is still unconfirmed, so every signal goes through a short wire instead of straight into it.</p>
+    <p>The silkscreen has no text yet; Ayham is adding labels in KiCad. Front row, left to right: G4, G3, 3V3, SCL, SDA, GND, INT, G2, G1. Rear row: BAT+ (square), BAT−, OUT, GND, IN, then C1. The ESP32's pin labels (from Ayham's photo) match this plan; every signal goes through a short wire from these pads.</p>
     <div class="table">
       <table>
         <thead><tr><th>Pad</th><th>Goes to</th><th>Wire</th><th>What it is</th></tr></thead>
@@ -208,8 +208,8 @@ td.mono { font-family: var(--font-mono); font-size: 12.5px; white-space: nowrap;
   <section class="panel">
     <h2>Still open</h2>
     <ol class="open">
-      <li>Measure the real parts against the board before ordering: TPS63020 module 20 × 12 mm or smaller, GY-521 pin order, MOSFET legs 1.1 mm or thinner.</li>
-      <li>Photo of the ESP32 board's pin labels and a ruler, to confirm the pins and its size. The ESP32 layout in this model is approximate.</li>
+      <li>Checked from photos: the MOSFETs, GY-521 pin order, motors, battery and the ESP32's pin labels all fit. MOSFET holes widened to 1.2 mm to be safe.</li>
+      <li>Where the TPS63020 goes: the real module is about 27.5 × 18.7 mm, too big for its 20 × 12 mm spot on the board. The model still shows the old size.</li>
       <li>Test-print one motor tube and adjust the fit (TUBE_ID, now 8.6 mm).</li>
       <li>A camera mount. The OV2640 hangs on its ribbon at the front for now.</li>
       <li>Weigh everything and measure one motor's thrust. With about 70 g to lift, each motor needs about 35 g of thrust for a 2:1 margin.</li>
@@ -232,18 +232,18 @@ const MOTORS = [
   { m: 3, sx: -1, sy: -1, spin: 'CCW', where: 'rear left', wires: ['#d93a2b', '#2f5fd0'] },
   { m: 4, sx: -1, sy: 1, spin: 'CW', where: 'front left', wires: ['#e9e9e4', '#1b1b1b'] },
 ];
-// signal wires from the front pads up to the ESP32 (its pin positions are approximate)
+// signal wires from the front pads up to the ESP32's labelled pins (side and label as printed on the board)
 const ESPW = [
-  ['J.G4', 'GPIO 38', 'Motor 4 gate', '#f2b134', -1, 22.86], ['J.G3', 'GPIO 14', 'Motor 3 gate', '#e8742a', -1, 20.32],
-  ['J.3V3', '3V3', '3.3 V supply in', '#d93a2b', -1, 17.78], ['J.SCL', 'GPIO 42', 'MPU6050 clock', '#3f8f4f', -1, 15.24],
-  ['J.SDA', 'GPIO 41', 'MPU6050 data', '#2f5fd0', -1, 12.7], ['J.GND', 'GND', 'Ground', '#1b1b1b', 1, 22.86],
-  ['J.INT', 'GPIO 40', 'MPU6050 interrupt', '#e9e9e4', 1, 20.32], ['J.G2', 'GPIO 47', 'Motor 2 gate', '#9b59b6', 1, 17.78],
-  ['J.G1', 'GPIO 21', 'Motor 1 gate', '#c08a2d', 1, 15.24],
+  ['J.G4', 'GPIO 38', 'Motor 4 gate', '#f2b134', 'right', '38'], ['J.G3', 'GPIO 14', 'Motor 3 gate', '#e8742a', 'left', '14'],
+  ['J.3V3', '3V3', '3.3 V supply in', '#d93a2b', 'left', '3V3'], ['J.SCL', 'GPIO 42', 'MPU6050 clock', '#3f8f4f', 'right', '42'],
+  ['J.SDA', 'GPIO 41', 'MPU6050 data', '#2f5fd0', 'right', '41'], ['J.GND', 'GND', 'Ground', '#1b1b1b', 'right', 'GND'],
+  ['J.INT', 'GPIO 40', 'MPU6050 interrupt', '#e9e9e4', 'right', '40'], ['J.G2', 'GPIO 47', 'Motor 2 gate', '#9b59b6', 'right', '47'],
+  ['J.G1', 'GPIO 21', 'Motor 1 gate', '#c08a2d', 'right', '21'],
 ];
 
 // ------------------------------------------------------------------ parts registry
 const PARTS = [
-  { id: 'frame', sub: 'Printed', name: 'Printed frame', g: 5.6, color: '#e8742a', isNew: true, ex: 0,
+  { id: 'frame', sub: 'Printed', name: 'Printed frame', g: 5.7, color: '#e8742a', isNew: true, ex: 0,
     role: 'One piece, printed flat with no supports. Motor clip tubes, four PCB posts, two ESP32 bridges and crossbars for the battery strap.',
     chg: 'New in rev B. In rev A the PCB itself was the frame.' },
   { id: 'pcb', sub: 'Board', name: 'Flight-controller PCB', g: 4.7, color: '#14532d', isNew: true, ex: 12,
@@ -265,12 +265,12 @@ const PARTS = [
   { id: 'tps', sub: 'Board', name: 'TPS63020 buck-boost', g: 1.0, color: '#6b3fa0', ex: 12,
     role: 'Turns 3.0–4.2 V from the battery into a steady 3.3 V. On foam tape under the ESP32, three wires to OUT, GND and IN, EN bridged to VIN.' },
   { id: 'esp', sub: 'Brain link', name: 'ESP32-S3 CAM board', g: 8.0, color: '#26282c', isNew: true, ex: 44,
-    role: 'Runs the flight firmware and streams video to the laptop. Lies on the two frame bridges, 14 mm above the PCB. Layout and size approximate.',
+    role: 'ESP32-S3-WROOM-1 N16R8 on a 28.5 × 51 mm board (measured from a photo), antenna forward, two USB-C at the rear. Rests on the two frame bridges, 14 mm above the PCB. Its pin labels match our pin plan.',
     chg: 'Sits on printed bridges now instead of 8 mm spacers on the board.' },
   { id: 'cam', sub: 'Brain link', name: 'OV2640 camera', g: 1.5, color: '#111111', ex: 44,
-    role: "The fly's eye: 66° lens on a 21 mm ribbon into the ESP32's 24-pin connector, looking forward. No printed mount yet." },
+    role: "The fly's eye: 66° lens on a 21 mm ribbon into the ESP32's 24-pin connector. The ribbon only reaches the top of the module, so the camera stands there looking forward. No printed mount yet." },
   { id: 'espwires', sub: 'Brain link', name: 'Wires to the ESP32 ×9', g: 1.0, color: '#f2b134', ex: null,
-    role: 'Short 28 AWG wires from the front pads up to the ESP32 pins: four gates, I²C, interrupt, 3.3 V and ground.',
+    role: 'Short 28 AWG wires from the front pads up to the ESP32 pins: four gates, I²C, interrupt, 3.3 V and ground. Four of them run back to pins near the rear of the ESP32 (14, 47, 21 and GND).',
     chg: 'All nine come from one row at the front now (rev A had pads front and rear).' },
   { id: 'motors', sub: 'Flight', name: '8520 motors ×4', g: 17.6, color: '#c9ccd1', isNew: true, ex: 22,
     role: 'Coreless, 8.5 × 20 mm. Clipped into the frame tubes, resting on an inner lip; wires out the bottom, along the arm and up into the corner pads.',
@@ -306,7 +306,7 @@ const STEPS = [
 
 // ------------------------------------------------------------------ change table and pad table
 const DIFF = [
-  ['Frame', 'The PCB was the frame (83 × 83 mm X, 8.6 g)', 'Printed one-piece X, 78 × 78 mm, 5.6 g'],
+  ['Frame', 'The PCB was the frame (83 × 83 mm X, 8.6 g)', 'Printed one-piece X, 78 × 78 mm, 5.7 g'],
   ['Circuit board', '83 × 83 mm, carried the motors', '46 × 44 mm in the middle, 4.7 g'],
   ['Motors', 'In 8.8 mm PCB holes with printed collars', 'In printed clip tubes, resting on an inner lip'],
   ['MOSFETs', 'Lying flat, metal side down on copper', 'Standing upright along the side edges, tab outward'],
@@ -527,45 +527,52 @@ for (const sx of [1, -1]) for (const sy of [1, -1]) {
   G.screws.add(g);
 }
 
-// ------------------------------------------------------------------ ESP32-S3 CAM board (approximate layout), camera
+// ------------------------------------------------------------------ ESP32-S3 WROOM CAM board (measured from Ayham's photo), camera
+const ESP = { x: 14.25, y0: -25.2, y1: 25.8, row: 12.7 };
+const ESP_PINS = {
+  left: ['3V3', 'EN', '4', '5', '6', '7', '15', '16', '17', '18', '8', '3', '46', '9', '10', '11', '12', '13', '14', '5V'],
+  right: ['TX', 'RX', '1', '2', '42', '41', '40', '39', '38', '37', '36', '35', '0', '45', '48', '47', '21', '20', '19', 'GND'],
+};
+const pinY = i => ESP.y1 - 0.8 - 2.54 * i;
+const pinXY = (side, label) => { const i = ESP_PINS[side].indexOf(label); return [side === 'left' ? -ESP.row : ESP.row, pinY(i)]; };
 (function esp() {
   const g = G.esp, z0 = Z.esp, t = z0 + 1.6;
-  g.add(box(25, 61, 1.6, MAT.blackMask, 0, 0, z0 + 0.8));
-  // two rows of 20 plated holes along the long edges
+  g.add(box(2 * ESP.x, ESP.y1 - ESP.y0, 1.6, MAT.blackMask, 0, (ESP.y0 + ESP.y1) / 2, z0 + 0.8));
+  // two rows of 20 plated holes, 25.4 mm apart
   const ringG = new THREE.RingGeometry(0.5, 0.85, 16), holeG = new THREE.CircleGeometry(0.5, 16);
   for (const sx of [-1, 1]) for (let i = 0; i < 20; i++) {
-    const y = 24.13 - i * 2.54;
     for (const [zz, flip] of [[t + 0.01, false], [z0 - 0.01, true]]) {
-      const r = new THREE.Mesh(ringG, MAT.gold); r.position.set(sx * 11.43, y, zz); if (flip) r.rotation.x = Math.PI; g.add(r);
-      const h = new THREE.Mesh(holeG, MAT.black); h.position.set(sx * 11.43, y, zz + (flip ? -0.005 : 0.005)); if (flip) h.rotation.x = Math.PI; g.add(h);
+      const r = new THREE.Mesh(ringG, MAT.gold); r.position.set(sx * ESP.row, pinY(i), zz); if (flip) r.rotation.x = Math.PI; g.add(r);
+      const h = new THREE.Mesh(holeG, MAT.black); h.position.set(sx * ESP.row, pinY(i), zz + (flip ? -0.005 : 0.005)); if (flip) h.rotation.x = Math.PI; g.add(h);
     }
   }
-  // ESP32-S3-WROOM-1 module: substrate, shield can, antenna strip toward the front
-  g.add(box(18, 25.5, 0.8, M('#1b2a22', { roughness: 0.5 }), 0, 6, t + 0.4));
-  g.add(box(15.8, 17.6, 2.4, MAT.metal, 0, 2.2, t + 0.8 + 1.2));
-  g.add(box(15, 5.5, 0.05, MAT.gold, 0, 16.2, t + 0.83));
-  g.add(box(9, 7.4, 3.2, MAT.metal, 0, -27.2, t + 1.6));                               // USB-C at the rear
-  g.add(box(6.5, 0.6, 2.2, MAT.black, 0, -30.6, t + 1.6));
-  for (const x of [-7.5, 7.5]) { g.add(box(3.5, 4.2, 1.5, MAT.metal, x, -19, t + 0.75)); g.add(cylZ(0.9, 0.6, MAT.black, x, -19, t + 1.5, 16)); } // BOOT, RST
-  g.add(box(2, 1.6, 1, MAT.black, 6, -12, t + 0.5)); g.add(box(1.6, 0.8, 0.5, M('#ff3b30', { emissive: '#b3140d', emissiveIntensity: 0.6 }), -6, -11, t + 0.25));
-  g.add(box(2.9, 1.6, 1.1, MAT.black, -6, -14, t + 0.55)); g.add(box(5, 5, 0.9, MAT.black, 5.5, -6, t + 0.45)); // regulator, PSRAM
-  // 24-pin camera FPC connector at the front edge
-  g.add(box(15, 4.2, 1.4, MAT.plastic, 0, 27.6, t + 0.7)); g.add(box(15.4, 1.2, 0.9, M('#6a4a2a'), 0, 29.3, t + 1.0));
-  // camera: ribbon folds forward and up, module looks forward
-  const c = G.cam;
-  const rib = new THREE.CatmullRomCurve3([[0, 29.6, t + 1.1], [0, 31.5, t + 1.4], [0, 33.2, t + 3], [0, 33.6, t + 5.5]].map(p => new THREE.Vector3(...p)));
-  const ribGeo = new THREE.TubeGeometry(rib, 24, 0.12, 3, false);
+  // ESP32-S3-WROOM-1 N16R8: substrate overhangs the front edge by 7 mm (antenna), shield can behind it
+  g.add(box(18, 25.5, 0.8, M('#16181b', { roughness: 0.5 }), 0, ESP.y1 + 7 - 12.75, t + 0.4));
+  g.add(box(15.8, 17.6, 2.3, MAT.metal, 0, 16.8, t + 0.8 + 1.15));
+  g.add(box(14, 4.5, 0.05, M('#6d5a2c', { roughness: 0.5 }), 0, 29.8, t + 0.83));
+  // 24-pin camera connector in the middle, white with a black latch
+  g.add(box(14.2, 4.2, 1.6, M('#ece9df', { roughness: 0.5 }), 0, -2.6, t + 0.8)); g.add(box(14.6, 1.1, 1.0, MAT.black, 0, -4.4, t + 1.1));
+  // EN/RST and BOOT buttons, status LEDs (ON, TX, RX, IO2) and the RGB LED on GPIO 48
+  for (const x of [-8, 8]) { g.add(box(3.6, 4.2, 1.6, MAT.metal, x, -12.1, t + 0.8)); g.add(cylZ(0.9, 0.6, MAT.black, x, -12.1, t + 1.6, 16)); }
+  [['#7dd36b', -4.1], ['#ffb02e', -2.6], ['#ff5a4a', -1.1], ['#5aa0ff', 0.4]].forEach(([c, x]) => g.add(box(0.8, 1.6, 0.5, M(c, { emissive: c, emissiveIntensity: 0.4 }), x, -12.3, t + 0.25)));
+  g.add(box(2.2, 2.2, 0.8, M('#f4f4f4', { emissive: '#ffffff', emissiveIntensity: 0.15 }), 3.2, -12.3, t + 0.4));
+  // two USB-C ports at the rear
+  for (const x of [-6.4, 4.7]) { g.add(box(9, 7.4, 3.2, MAT.metal, x, -21.6, t + 1.6)); g.add(box(6.6, 0.4, 2.2, MAT.black, x, -25.35, t + 1.6)); }
+  // camera: the 21 mm ribbon reaches forward over the module; the camera stands on the shield looking forward
+  const c = G.cam, top = t + 0.8 + 2.3;
+  const rib = new THREE.CatmullRomCurve3([[0, -2.0, t + 1.6], [0, 1, t + 3.2], [0, 7, top + 0.3], [0, 13.6, top + 0.3], [0, 14.4, top + 1.2]].map(p => new THREE.Vector3(...p)));
+  const ribGeo = new THREE.TubeGeometry(rib, 32, 0.12, 3, false);
   for (let i = -5; i <= 5; i++) { const m = new THREE.Mesh(ribGeo, M('#c46b16', { roughness: 0.5 })); m.position.x = i * 0.75; c.add(cad(m)); }
-  c.add(box(8.5, 1, 8.5, MAT.blackMask, 0, 34.2, t + 7.5));
-  c.add(box(8, 4, 8, MAT.plastic, 0, 36.7, t + 7.5));
-  c.add(cylAxis(3.4, 3.5, MAT.plastic, 'y', 0, 40.4, t + 7.5, 32));
-  const lens = cylAxis(2.4, 0.4, M('#1b2236', { roughness: 0.05, metalness: 0.6 }), 'y', 0, 42.2, t + 7.5, 32); c.add(lens);
+  c.add(box(8.5, 1, 8.5, MAT.blackMask, 0, 14.6, top + 4.25));
+  c.add(box(8, 4, 8, MAT.plastic, 0, 17.1, top + 4.25));
+  c.add(cylAxis(3.4, 3.5, MAT.plastic, 'y', 0, 20.8, top + 4.25, 32));
+  c.add(cylAxis(2.4, 0.4, M('#1b2236', { roughness: 0.05, metalness: 0.6 }), 'y', 0, 22.6, top + 4.25, 32));
 })();
 
 // ------------------------------------------------------------------ wires: ESP32 signals, motor leads, battery pigtail
-for (const [pad, , , col, side, ty] of ESPW) {
-  const [px, py] = P(pad), tx = side * 11.43;
-  G.espwires.add(wire([[px, py, Z.pcbBot - 1.2], [px, py, Z.pcbTop + 2.5], [px + (tx - px) * 0.35, py + 0.4, Z.pcbTop + 7], [tx, ty, Z.esp - 3], [tx, ty, Z.esp + 2.1]], col, 0.32));
+for (const [pad, , , col, side, label] of ESPW) {
+  const [px, py] = P(pad), [tx, ty] = pinXY(side, label);
+  G.espwires.add(wire([[px, py, Z.pcbBot - 1.2], [px, py, Z.pcbTop + 4], [tx * 0.9, (py + ty) / 2, Z.esp - 4], [tx, ty, Z.esp - 1.5], [tx, ty, Z.esp + 2.1]], col, 0.32));
 }
 for (const mo of MOTORS) {
   const mx = mo.sx * MC, my = mo.sy * MC;

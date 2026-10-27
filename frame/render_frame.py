@@ -103,11 +103,16 @@ for sx in (1, -1):
 cube(-10.6, 10.6, 1.3, 17.3, 7.5, 9.1, blue)
 cube(-10, 10, -14, -2, 5.5, 8.0, mat("tps", (0.35, 0.1, 0.45), 0.4))
 cylz(6.85, -18.5, 5.0, 17.0, 3.15, mat("cap", (0.1, 0.15, 0.4), 0.3))
-# ESP32 on the bridges, with its module and the camera at the front
-cube(-12.5, 12.5, -30.5, 30.5, 19.0, 20.6, mat("esp", (0.08, 0.08, 0.1), 0.4))
-cube(-9, 9, 2, 27.5, 20.6, 23.6, metal)
-cube(-4, 4, 26, 31, 20.6, 28.6, black)
-bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=2.6, depth=3, location=(0, 32.5, 24.6), rotation=(math.radians(90), 0, 0))
+# ESP32 on the bridges (28.5 x 51 mm, measured from a photo): module and antenna at the front, two USB-C at the rear,
+# camera propped on the module looking forward
+cube(-14.25, 14.25, -25.2, 25.8, 19.0, 20.6, mat("esp", (0.08, 0.08, 0.1), 0.4))
+cube(-9, 9, 7.3, 32.8, 20.6, 21.4, black)
+cube(-7.9, 7.9, 8.0, 25.6, 21.4, 23.7, metal)
+for x in (-6.4, 4.7):
+    cube(x - 4.5, x + 4.5, -26.0, -18.6, 20.6, 23.8, metal)
+cube(-4.25, 4.25, 14, 15.2, 23.7, 32.2, black)
+cube(-4, 4, 15.2, 19, 24, 32, black)
+bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=3.4, depth=3.5, location=(0, 20.7, 28), rotation=(math.radians(90), 0, 0))
 add(bpy.context.object, black)
 # battery under the frame, strap over the crossbars
 cube(-10, 10, -20, 20, -7.0, 0.0, silver)
