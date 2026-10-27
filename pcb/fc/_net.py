@@ -10,7 +10,7 @@ for n in sorted(nets):
 expect = {
  "VBAT": {"BAT+","C1.+","J.IN","M1+","M2+","M3+","M4+","D1.K","D2.K","D3.K","D4.K"},
  "GND": {"BAT-","C1.-","J.GND","J.TG","U2.GND","Q1.S","Q2.S","Q3.S","Q4.S","R1.2","R2.2","R3.2","R4.2"},
- "3V3": {"J.3V3","J.OUT","U2.VCC"}, "SCL": {"J.SCL","U2.SCL"}, "SDA": {"J.SDA","U2.SDA"}, "INT": {"J.INT","U2.INT"},
+ "3V3": {"J.3V3","U2.VCC"}, "SCL": {"J.SCL","U2.SCL"}, "SDA": {"J.SDA","U2.SDA"}, "INT": {"J.INT","U2.INT"},
 }
 for m in range(1,5):
     expect[f"GATE{m}"] = {f"Q{m}.G", f"R{m}.1", f"J.G{m}"}

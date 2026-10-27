@@ -196,7 +196,7 @@ td.mono { font-family: var(--font-mono); font-size: 12.5px; white-space: nowrap;
 
   <section class="panel">
     <h2>Pads on the board</h2>
-    <p>The silkscreen has no text yet; Ayham is adding labels in KiCad. Front row, left to right: G4, G3, 3V3, SCL, SDA, GND, INT, G2, G1. Rear row: BAT+ (square), BAT−, OUT, GND, IN, then C1. The ESP32's pin labels (from Ayham's photo) match this plan; every signal goes through a short wire from these pads.</p>
+    <p>The silkscreen has no text yet; Ayham is adding labels in KiCad. Front row, left to right: G4, G3, 3V3, SCL, SDA, GND, INT, G2, G1. Rear row: BAT+ (square), BAT−, GND, IN, then C1. The ESP32's pin labels (from Ayham's photo) match this plan; every signal goes through a short wire from these pads.</p>
     <div class="table">
       <table>
         <thead><tr><th>Pad</th><th>Goes to</th><th>Wire</th><th>What it is</th></tr></thead>
@@ -209,7 +209,7 @@ td.mono { font-family: var(--font-mono); font-size: 12.5px; white-space: nowrap;
     <h2>Still open</h2>
     <ol class="open">
       <li>Checked from photos: the MOSFETs, GY-521 pin order, motors, battery and the ESP32's pin labels all fit. MOSFET holes widened to 1.2 mm to be safe.</li>
-      <li>Where the TPS63020 goes: the real module is about 27.5 × 18.7 mm, too big for its 20 × 12 mm spot on the board. The model still shows the old size.</li>
+      <li>Bench-test the TPS63020 before it goes under the ESP32: bridge its 3V3 pad, power it from the battery and measure 3.3 V at OUT.</li>
       <li>Test-print one motor tube and adjust the fit (TUBE_ID, now 8.6 mm).</li>
       <li>A camera mount. The OV2640 hangs on its ribbon at the front for now.</li>
       <li>Weigh everything and measure one motor's thrust. With about 70 g to lift, each motor needs about 35 g of thrust for a 2:1 margin.</li>
@@ -223,7 +223,7 @@ td.mono { font-family: var(--font-mono); font-size: 12.5px; white-space: nowrap;
 <script>
 (() => {
 // ------------------------------------------------------------------ data from the design files (mm, x right, y front, z up)
-const PADS = {"Q1.G":[19.4,10.08],"Q1.D":[19.4,7.54],"Q1.S":[19.4,5.0],"M1+":[13.0,19.6],"M1-":[16.0,19.6],"D1.A":[15.4,16.0],"D1.K":[15.4,3.3],"R1.1":[12.2,10.08],"R1.2":[12.2,2.46],"Q2.G":[19.4,-5.0],"Q2.D":[19.4,-7.54],"Q2.S":[19.4,-10.08],"M2+":[13.0,-19.6],"M2-":[16.0,-19.6],"D2.A":[15.4,-16.0],"D2.K":[15.4,-3.3],"R2.1":[12.2,-5.0],"R2.2":[12.2,-12.62],"Q3.G":[-19.4,-10.08],"Q3.D":[-19.4,-7.54],"Q3.S":[-19.4,-5.0],"M3+":[-13.0,-19.6],"M3-":[-16.0,-19.6],"D3.A":[-15.4,-16.0],"D3.K":[-15.4,-3.3],"R3.1":[-12.2,-10.08],"R3.2":[-12.2,-2.46],"Q4.G":[-19.4,5.0],"Q4.D":[-19.4,7.54],"Q4.S":[-19.4,10.08],"M4+":[-13.0,19.6],"M4-":[-16.0,19.6],"D4.A":[-15.4,16.0],"D4.K":[-15.4,3.3],"R4.1":[-12.2,5.0],"R4.2":[-12.2,12.62],"J.G4":[-10.16,20.2],"J.G3":[-7.62,20.2],"J.3V3":[-5.08,20.2],"J.SCL":[-2.54,20.2],"J.SDA":[0.0,20.2],"J.GND":[2.54,20.2],"J.INT":[5.08,20.2],"J.G2":[7.62,20.2],"J.G1":[10.16,20.2],"U2.VCC":[-8.89,16.0],"U2.GND":[-6.35,16.0],"U2.SCL":[-3.81,16.0],"U2.SDA":[-1.27,16.0],"U2.XDA":[1.27,16.0],"U2.XCL":[3.81,16.0],"U2.AD0":[6.35,16.0],"U2.INT":[8.89,16.0],"BAT+":[-9.0,-18.5],"BAT-":[-5.8,-18.5],"J.OUT":[-2.54,-18.5],"J.TG":[0.0,-18.5],"J.IN":[2.54,-18.5],"C1.-":[5.6,-18.5],"C1.+":[8.1,-18.5]};
+const PADS = {"Q1.G":[19.4,10.08],"Q1.D":[19.4,7.54],"Q1.S":[19.4,5.0],"M1+":[13.0,19.6],"M1-":[16.0,19.6],"D1.A":[15.4,16.0],"D1.K":[15.4,3.3],"R1.1":[12.2,10.08],"R1.2":[12.2,2.46],"Q2.G":[19.4,-5.0],"Q2.D":[19.4,-7.54],"Q2.S":[19.4,-10.08],"M2+":[13.0,-19.6],"M2-":[16.0,-19.6],"D2.A":[15.4,-16.0],"D2.K":[15.4,-3.3],"R2.1":[12.2,-5.0],"R2.2":[12.2,-12.62],"Q3.G":[-19.4,-10.08],"Q3.D":[-19.4,-7.54],"Q3.S":[-19.4,-5.0],"M3+":[-13.0,-19.6],"M3-":[-16.0,-19.6],"D3.A":[-15.4,-16.0],"D3.K":[-15.4,-3.3],"R3.1":[-12.2,-10.08],"R3.2":[-12.2,-2.46],"Q4.G":[-19.4,5.0],"Q4.D":[-19.4,7.54],"Q4.S":[-19.4,10.08],"M4+":[-13.0,19.6],"M4-":[-16.0,19.6],"D4.A":[-15.4,16.0],"D4.K":[-15.4,3.3],"R4.1":[-12.2,5.0],"R4.2":[-12.2,12.62],"J.G4":[-10.16,20.2],"J.G3":[-7.62,20.2],"J.3V3":[-5.08,20.2],"J.SCL":[-2.54,20.2],"J.SDA":[0.0,20.2],"J.GND":[2.54,20.2],"J.INT":[5.08,20.2],"J.G2":[7.62,20.2],"J.G1":[10.16,20.2],"U2.VCC":[-8.89,16.0],"U2.GND":[-6.35,16.0],"U2.SCL":[-3.81,16.0],"U2.SDA":[-1.27,16.0],"U2.XDA":[1.27,16.0],"U2.XCL":[3.81,16.0],"U2.AD0":[6.35,16.0],"U2.INT":[8.89,16.0],"BAT+":[-9.0,-18.5],"BAT-":[-5.8,-18.5],"J.TG":[0.0,-18.5],"J.IN":[2.54,-18.5],"C1.-":[5.6,-18.5],"C1.+":[8.1,-18.5]};
 const MC = 47.5 / Math.SQRT2;          // motor axis offset in x and y
 const Z = { pcbBot: 4, pcbTop: 5, esp: 19, motor: 6, motorTop: 26, prop: 28.6 };
 const MOTORS = [
@@ -262,8 +262,9 @@ const PARTS = [
     role: 'Across the battery, at the rear. Standing, + on the square pad.' },
   { id: 'mpu', sub: 'Board', name: 'MPU6050 (GY-521)', g: 2.0, color: '#2563a6', ex: 12,
     role: 'Gyro and accelerometer for balance, on its 8-pin header in the middle of the board, chips up, body toward the rear.' },
-  { id: 'tps', sub: 'Board', name: 'TPS63020 buck-boost', g: 1.0, color: '#6b3fa0', ex: 12,
-    role: 'Turns 3.0–4.2 V from the battery into a steady 3.3 V. On foam tape under the ESP32, three wires to OUT, GND and IN, EN bridged to VIN.' },
+  { id: 'tps', sub: 'Board', name: 'TPS63020 buck-boost', g: 1.0, color: '#6b3fa0', isNew: true, ex: 44,
+    role: 'Turns 3.0–4.2 V from the battery into a steady 3.3 V. The real module is 27.5 × 18.7 mm, so it sits on foam under the ESP32 between its pin rows. VIN and GND go to the rear pads, OUT straight to the ESP32 3V3 pin. Bridge its 3V3 pad and EN to VIN.',
+    chg: 'Moved off the board: it was planned for a 20 × 12 mm spot that turned out too small.' },
   { id: 'esp', sub: 'Brain link', name: 'ESP32-S3 CAM board', g: 8.0, color: '#26282c', isNew: true, ex: 44,
     role: 'ESP32-S3-WROOM-1 N16R8 on a 28.5 × 51 mm board (measured from a photo), antenna forward, two USB-C at the rear. Rests on the two frame bridges, 14 mm above the PCB. Its pin labels match our pin plan.',
     chg: 'Sits on printed bridges now instead of 8 mm spacers on the board.' },
@@ -296,10 +297,10 @@ const STEPS = [
   { t: 'MOSFETs Q1–Q4', d: 'Standing upright, metal tab toward the board edge. Legs straight down, about 3 mm of leg above the board.', show: ['pcb', 'resistors', 'diodes', 'mosfets'], hi: ['mosfets'], view: 'board' },
   { t: 'Capacitor C1', d: 'Standing at the rear, + on the square pad (the stripe on the can marks −).', show: ['pcb', 'resistors', 'diodes', 'mosfets', 'c1'], hi: ['c1'], view: 'rear' },
   { t: 'MPU6050', d: 'On its 8-pin header, chips up, body toward the rear so it sits over the board.', show: ['pcb', 'resistors', 'diodes', 'mosfets', 'c1', 'mpu'], hi: ['mpu'], view: 'board' },
-  { t: 'Buck-boost and 3.3 V check', d: 'Module on foam tape in its outline, three short wires to OUT, GND and IN, EN bridged to VIN. Connect the battery and measure 3.3 V at the front 3V3 pad.', show: ['pcb', 'resistors', 'diodes', 'mosfets', 'c1', 'mpu', 'tps'], hi: ['tps'], view: 'rear' },
-  { t: 'Board onto the frame', d: 'Four M2 screws through the corners into the posts. Do not overtighten; the plastic is the thread.', show: ['frame', 'pcb', 'resistors', 'diodes', 'mosfets', 'c1', 'mpu', 'tps', 'screws'], hi: ['screws', 'pcb'], view: 'iso' },
-  { t: 'Motors', d: 'Push each motor into its tube until it sits on the lip. Wires out the bottom, along the arm, up into the corner pads: + to the pad nearer the middle.', show: ['frame', 'pcb', 'resistors', 'diodes', 'mosfets', 'c1', 'mpu', 'tps', 'screws', 'motors', 'wires'], hi: ['motors', 'wires'], view: 'iso' },
-  { t: 'ESP32 and camera', d: 'Nine short wires from the front pads, then lay the ESP32 on the bridges (foam tape or a rubber band). Camera ribbon into its connector, lens forward.', show: ['frame', 'pcb', 'resistors', 'diodes', 'mosfets', 'c1', 'mpu', 'tps', 'screws', 'motors', 'wires', 'espwires', 'esp', 'cam'], hi: ['espwires', 'esp', 'cam'], view: 'front' },
+  { t: 'Test the buck-boost', d: 'On the bench: bridge the module\'s 3V3 pad and EN to VIN, solder short VIN, GND and OUT wires, connect the battery and measure 3.3 V at OUT. Then stick it with foam tape under the ESP32, between the pin rows, VIN end toward the USB ports.', show: ['pcb', 'resistors', 'diodes', 'mosfets', 'c1', 'mpu', 'tps'], hi: ['tps'], view: 'rear' },
+  { t: 'Board onto the frame', d: 'Four M2 screws through the corners into the posts. Do not overtighten; the plastic is the thread.', show: ['frame', 'pcb', 'resistors', 'diodes', 'mosfets', 'c1', 'mpu', 'screws'], hi: ['screws', 'pcb'], view: 'iso' },
+  { t: 'Motors', d: 'Push each motor into its tube until it sits on the lip. Wires out the bottom, along the arm, up into the corner pads: + to the pad nearer the middle.', show: ['frame', 'pcb', 'resistors', 'diodes', 'mosfets', 'c1', 'mpu', 'screws', 'motors', 'wires'], hi: ['motors', 'wires'], view: 'iso' },
+  { t: 'ESP32, buck-boost and camera', d: 'Nine short wires from the front pads to the ESP32 pins. The buck-boost (already under the ESP32): VIN and GND to the rear IN and GND pads, OUT into the ESP32 3V3 pin next to the 3V3 wire. Lay the ESP32 on the bridges (foam tape or a rubber band). Camera ribbon into its connector, lens forward.', show: ['frame', 'pcb', 'resistors', 'diodes', 'mosfets', 'c1', 'mpu', 'tps', 'screws', 'motors', 'wires', 'espwires', 'esp', 'cam'], hi: ['espwires', 'esp', 'cam', 'tps'], view: 'front' },
   { t: 'Battery', d: 'Under the frame, strap under the battery and over the two bridge crossbars. Pigtail up around the rear edge.', show: ['frame', 'pcb', 'resistors', 'diodes', 'mosfets', 'c1', 'mpu', 'tps', 'screws', 'motors', 'wires', 'espwires', 'esp', 'cam', 'battery', 'strap'], hi: ['battery', 'strap'], view: 'below' },
   { t: 'Spin check, then props', d: 'Props off: check M1 and M3 spin counter-clockwise, M2 and M4 clockwise from above. Swap a motor\'s two wires if it is wrong. Props go on last.', show: PARTS.map(p => p.id), hi: ['props'], view: 'iso' },
 ];
@@ -314,6 +315,7 @@ const DIFF = [
   ['Battery', 'Printed tray screwed under the PCB', 'Strapped under the frame over the bridge crossbars'],
   ['ESP32 wires', 'Pads at the front and the rear', 'One row of nine pads at the front'],
   ['Silkscreen', 'Full labels and spin arrows', 'Outlines only; Ayham is adding his own text'],
+  ['Buck-boost', '20 × 12 mm spot on the board, OUT to a rear pad', 'Real module is 27.5 × 18.7 mm: on foam under the ESP32, OUT to its 3V3 pin'],
   ['Unchanged', 'Same parts, same circuit, same pins', 'Gates on GPIO 21, 47, 14, 38; MPU6050 on 42, 41, 40'],
 ];
 document.getElementById('diff').innerHTML =
@@ -323,7 +325,7 @@ const padRows = [
   ...ESPW.map(([pad, to, what, col]) => [pad.slice(2), 'ESP32 ' + to, col, what]),
   ['M1+ / M1− … M4+ / M4−', 'Motor leads, at each corner', '#d93a2b', '+ is battery plus; − is switched by the MOSFET'],
   ['BAT+ / BAT−', 'Battery pigtail', '#d93a2b', 'BAT+ is the square pad'],
-  ['OUT / GND / IN', 'TPS63020 VOUT / GND / VIN', '#f2b134', 'Bridge the module\'s EN pad to its VIN'],
+  ['GND / IN (rear)', 'TPS63020 GND / VIN', '#d93a2b', 'The module\'s OUT goes straight to the ESP32 3V3 pin, not to the board'],
 ];
 document.getElementById('padtable').innerHTML = padRows.map(([a, b, c, d]) =>
   `<tr><td class="mono">${a}</td><td>${b}</td><td><span class="sw" style="background:${c}"></span></td><td>${d}</td></tr>`).join('');
@@ -503,20 +505,22 @@ for (const mo of MOTORS) {
     const hole = new THREE.Mesh(new THREE.CircleGeometry(1.5, 24), MAT.black); hole.position.set(x, y0 - 13.2, top + 0.012); g.add(hole); }
 })();
 
-// ------------------------------------------------------------------ TPS63020 module on foam, three wires, EN bridge
+// ------------------------------------------------------------------ TPS63020 module (27.5 × 18.7 mm) on foam under the ESP32
+const TPS = { x: 9.35, y0: -13.5, y1: 14.0, vin: [6.6, -12.4], gin: [-6.6, -12.4], out: [-6.6, 12.9], gout: [6.6, 12.9] };
 (function tps() {
-  const g = G.tps, cy = -8.2, z0 = Z.pcbTop;
-  g.add(box(17, 10, 1.2, MAT.foam, 0, cy, z0 + 0.6));
-  g.add(box(18, 11, 1.2, M('#6b3fa0', { roughness: 0.45 }), 0, cy, z0 + 1.2 + 0.6));
-  const t = z0 + 2.4;
-  g.add(box(4.2, 4.2, 2.0, M('#4a4d52', { roughness: 0.6 }), 2.5, cy + 0.5, t + 1.0));           // inductor
-  g.add(box(3, 2.5, 0.8, MAT.black, -2.5, cy + 1.2, t + 0.4));                                  // TPS63020 QFN
-  for (const [x, y] of [[-5.5, 2.5], [-5.5, -1.5], [6.5, 2.5], [6.5, -2]]) g.add(box(2, 1.25, 1.1, M('#a68a5a'), x, cy + y, t + 0.55));
-  const pads = { VIN: [-6, -4.6], GND: [-1, -4.6], VOUT: [4, -4.6], EN: [-6, 4.4] };
-  for (const [x, y] of Object.values(pads)) g.add(box(1.6, 1.0, 0.1, MAT.tin, x, cy + y, t + 0.05));
-  g.add(wire([[-6, cy - 4.6, t + 0.2], [-7.5, cy, t + 1.2], [-6, cy + 4.4, t + 0.2]], '#cfd2d6', 0.25));   // EN to VIN bridge
-  const run = (from, pad, col) => { const [px, py] = P(pad); g.add(wire([[from[0], cy + from[1], t + 0.3], [from[0], cy + from[1] - 2, t + 2], [px, py + 3, Z.pcbTop + 3], [px, py, Z.pcbTop + 0.4]], col)); };
-  run(pads.VIN, 'J.IN', '#d93a2b'); run(pads.GND, 'J.TG', '#1b1b1b'); run(pads.VOUT, 'J.OUT', '#f2b134');
+  const g = G.tps, top = Z.esp, cy = (TPS.y0 + TPS.y1) / 2, L = TPS.y1 - TPS.y0;
+  g.add(box(2 * TPS.x - 1, L - 1, 1.0, MAT.foam, 0, cy, top - 0.5));
+  g.add(box(2 * TPS.x, L, 1.0, MAT.blackMask, 0, cy, top - 1.5));
+  const b = top - 2.0;                                                   // underside of the module board
+  g.add(box(5.2, 5.2, 3.0, M('#5b5e63', { roughness: 0.6 }), 3.5, -7.2, b - 1.5));     // 1R5 inductor near the VIN end
+  g.add(box(3.2, 3.2, 0.9, MAT.black, -1.5, -1.0, b - 0.45));                          // TPS63020 QFN
+  for (const y of [3.5, 5.6, 7.7, 9.8]) g.add(box(3.4, 1.7, 1.6, M('#a68a5a'), 1.5, y, b - 0.8));   // output caps
+  for (const y of [-11.5, -10.4]) g.add(box(1.6, 0.8, 0.8, M('#a68a5a'), -3.5, y, b - 0.4));
+  for (const [x, y] of [TPS.vin, TPS.gin, TPS.out, TPS.gout]) {
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.9, 16), MAT.tin); ring.rotation.x = Math.PI; ring.position.set(x, y, b - 0.01); g.add(ring);
+  }
+  g.add(box(1.4, 1.0, 0.25, MAT.tin, -6.3, 4.2, b - 0.12));                           // 3V3 select pad, bridged
+  g.add(wire([[TPS.vin[0], TPS.vin[1], b - 0.2], [8.2, -9.5, b - 1], [7.2, -6.5, b - 0.2]], '#cfd2d6', 0.22));   // EN to VIN
 })();
 
 // ------------------------------------------------------------------ screws
@@ -570,6 +574,13 @@ const pinXY = (side, label) => { const i = ESP_PINS[side].indexOf(label); return
 })();
 
 // ------------------------------------------------------------------ wires: ESP32 signals, motor leads, battery pigtail
+{ // TPS63020: VIN and GND down to the rear pads, OUT up to the ESP32's 3V3 pin
+  const b = Z.esp - 2.0, run = (pts, col) => G.tps.add(wire(pts, col, 0.32));
+  const [inx, iny] = P('J.IN'), [gx, gy] = P('J.TG'), [ox, oy] = pinXY('left', '3V3');
+  run([[TPS.vin[0], TPS.vin[1], b + 0.6], [TPS.vin[0], TPS.vin[1], b - 2], [inx + 1, iny + 2, Z.pcbTop + 5], [inx, iny, Z.pcbTop + 2], [inx, iny, Z.pcbBot - 1.2]], '#d93a2b');
+  run([[TPS.gin[0], TPS.gin[1], b + 0.6], [TPS.gin[0], TPS.gin[1], b - 2], [gx - 1, gy + 2, Z.pcbTop + 5], [gx, gy, Z.pcbTop + 2], [gx, gy, Z.pcbBot - 1.2]], '#1b1b1b');
+  run([[TPS.out[0], TPS.out[1], b + 0.6], [TPS.out[0], TPS.out[1], b - 1.5], [-10.5, 19, b - 2], [ox, oy, Z.esp - 2], [ox, oy, Z.esp + 2.1]], '#f2b134');
+}
 for (const [pad, , , col, side, label] of ESPW) {
   const [px, py] = P(pad), [tx, ty] = pinXY(side, label);
   G.espwires.add(wire([[px, py, Z.pcbBot - 1.2], [px, py, Z.pcbTop + 4], [tx * 0.9, (py + ty) / 2, Z.esp - 4], [tx, ty, Z.esp - 1.5], [tx, ty, Z.esp + 2.1]], col, 0.32));
@@ -680,7 +691,7 @@ const visibleSet = new Set(PARTS.map(p => p.id));
 function applyVisibility() {
   for (const p of PARTS) {
     let v = visibleSet.has(p.id);
-    if ((p.id === 'esp' || p.id === 'cam' || p.id === 'espwires') && !espOn) v = false;
+    if ((p.id === 'esp' || p.id === 'cam' || p.id === 'espwires' || p.id === 'tps') && !espOn) v = false;
     if (p.ex === null && explode > 0.02) v = false;           // wires hide while exploded
     G[p.id].visible = v;
   }
@@ -765,7 +776,7 @@ renderer.domElement.addEventListener('pointerup', e => {
 // ------------------------------------------------------------------ labels
 const LABELS = [
   ['M1 · CCW', [MC, MC, Z.prop + 2]], ['M2 · CW', [MC, -MC, Z.prop + 2]], ['M3 · CCW', [-MC, -MC, Z.prop + 2]], ['M4 · CW', [-MC, MC, Z.prop + 2]],
-  ['Front', [0, 46, 30]], ['ESP32-S3 CAM', [0, -4, Z.esp + 5]], ['MOSFETs', [20, 7.5, 24.5]], ['MPU6050', [0, 9, 11]], ['TPS63020', [0, -8, 9]],
+  ['Front', [0, 46, 30]], ['ESP32-S3 CAM', [0, -4, Z.esp + 5]], ['MOSFETs', [20, 7.5, 24.5]], ['MPU6050', [0, 9, 11]], ['TPS63020', [0, 0, 14]],
   ['C1', [6.9, -18.5, 17.5]], ['Battery', [0, 0, -8]], ['ESP32 bridge', [7.5, -24.75, 15]], ['Wire pads', [0, 20.2, 7]],
 ];
 const labelsEl = document.getElementById('labels');

@@ -14,7 +14,11 @@ Coordinates are mm, top view, x to the right (drone's right side), y toward the 
 
 Layers:
   top    = parts side: signals, GND pour
-  bottom = VBAT pour, gate and 3V3 traces
+  bottom = VBAT pour, gate traces
+
+The TPS63020 module (27.5 x 18.7 mm, too big for the board) sits on foam under the ESP32. Its VIN and GND
+wires come to the rear pads; its OUT goes straight to the ESP32's 3V3 pin, which feeds this board through
+the front 3V3 pad.
 """
 import math, os, csv, sys, zipfile
 from collections import defaultdict
@@ -138,17 +142,14 @@ trace("INT", [(8.89, MPU_Y), (8.89, 17.4), (6.35, 17.4), (5.08, 18.67), (5.08, J
 # the ESP32 ground pad reaches the ground pour between the XDA and XCL pins
 trace("GND", [(2.54, JY), (2.54, 14.0)], 0.3)
 
-# ---------------------------------------------------------------- rear: battery, buck-boost wire pads, capacitor
+# ---------------------------------------------------------------- rear: battery, buck-boost input pads, capacitor
 RY = -18.5
 pad("BAT+", "VBAT", -9.0, RY, 2.5, 1.2, shape="rect", spoke=1.0)
 pad("BAT-", "GND", -5.8, RY, 2.5, 1.2, spoke=1.0)
-JP["OUT"] = pad("J.OUT", "3V3", -2.54, RY, 1.6, 0.8)
 JP["TG"] = pad("J.TG", "GND", 0.0, RY, 1.6, 0.8)
 JP["IN"] = pad("J.IN", "VBAT", 2.54, RY, 1.6, 0.8)
 pad("C1.-", "GND", 5.6, RY, 1.6, 0.8)
 pad("C1.+", "VBAT", 8.1, RY, 1.6, 0.8, shape="rect")
-# buck-boost 3.3 V up to the MPU and the ESP32 pad, on the bottom
-trace("3V3", [(-2.54, RY), (-2.54, -16.0), (-8.89, -9.65), (-8.89, MPU_Y)], 0.5, layer="bottom")
 
 # ---------------------------------------------------------------- silkscreen helpers
 FONT = FontProperties(family="DejaVu Sans", weight="bold")
@@ -238,15 +239,11 @@ sfill(Polygon([(-1.0, MPU_Y - 10.9), (1.0, MPU_Y - 10.9), (0, MPU_Y - 10.0)]))
 for name, p in JP.items():
     if p["y"] > 0:
         stext(name, p["x"], JY - 2.35, 1.2, rot=90)
-# buck-boost module outline (on foam tape)
-srect(-10.0, -14.2, 10.0, -2.2, 0.15)
-stext("TPS63020 ON FOAM", 0, -5.0, 1.2)
-stext("EN TO VIN", 0, -7.0, 1.2)
 stext("FLY-BRAIN FC rev B", 0, -11.4, 1.2)
 # rear row labels
 stext("BAT", -7.4, RY + 2.3, 1.2)
 stext("+", -9.0, RY - 2.3, 1.4); stext("-", -5.8, RY - 2.3, 1.6)
-stext("OUT", -2.54, RY + 2.45, 1.2, rot=90); stext("GND", 0.0, RY + 2.3, 1.2, rot=90); stext("IN", 2.54, RY + 1.9, 1.2, rot=90)
+stext("GND", 0.0, RY + 2.3, 1.2, rot=90); stext("IN", 2.54, RY + 1.9, 1.2, rot=90)
 stext("C1", 6.85, RY + 2.4, 1.2); stext("+", 8.1, RY - 2.2, 1.4)
 # bottom side
 stext("FLY-BRAIN FC rev B", 0, 0, 1.4, "bottom")
@@ -507,7 +504,7 @@ bom = [
     ("R1-R4", "10 kOhm 1/4 W, lying flat, 7.62 mm pitch", 4),
     ("C1", "100 uF 16-25 V electrolytic, standing, + on the square pad", 1),
     ("U2", "GY-521 MPU6050 on its 8-pin header, chips up, body toward the rear", 1),
-    ("TPS", "TPS63020 3.3 V buck-boost on foam tape in the outlined area, wired to IN/GND/OUT, EN bridged to VIN", 1),
+    ("TPS", "TPS63020 3.3 V buck-boost (27.5 x 18.7 mm) on foam under the ESP32: VIN and GND to the rear IN and GND pads, OUT to the ESP32 3V3 pin, EN bridged to VIN, 3V3 pad bridged", 1),
     ("ESP32", "ESP32-S3 CAM board held above by the printed frame, wired from the front pads", 1),
     ("M1-M4", "8520 motors in the printed frame, wires to the corner pads", 4),
     ("BAT", "1S 500 mAh battery pigtail into BAT+ and BAT-", 1),

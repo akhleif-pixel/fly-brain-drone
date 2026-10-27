@@ -36,6 +36,11 @@ MOSFET_BOX = (17.8, 22.6, 2.4, 12.6)  # |x| and |y| range of each upright MOSFET
 ESP_W = 28.5                 # ESP32-S3 WROOM CAM board, measured from a photo: 28.5 x 51 mm,
 ESP_Y = (-25.2, 25.8)        # USB-C end at the rear; the module's antenna overhangs the front by 7 mm
 ESP_ROWS = 12.7              # its two pin rows are 25.4 mm apart
+# TPS63020 module, 18.7 (x) by 27.5 (y) mm, on foam under the ESP32 between its pin rows; it hangs about
+# 5 mm down (foam, board, inductor)
+TPS = dict(x=18.7 / 2, y=(-13.5, 14.0), hang=5.0)
+MPU_TOP = 5.0 + 2.5 + 1.6 + 1.2   # PCB top, header spacer, GY-521 board, chips and pin tips
+C1_Y, C1_TOP = -15.35, 5.6 + 11.2  # front edge of C1's can, and its top
 BATTERY = (20.0, 40.0, 7.0)  # w (x), l (y), thickness
 
 # ---------------------------------------------------------------- frame parameters
@@ -158,6 +163,10 @@ need(min(front_rest, rear_rest) >= 2.5, f"ESP32 rests on the bridges: {front_res
 need(ESP_ROWS - (BRIDGE_X + BRIDGE_LEG[0] / 2) >= 2.0, f"bridge tops to the ESP32's pin rows: {ESP_ROWS - BRIDGE_X - BRIDGE_LEG[0] / 2:.1f} mm (room for solder joints)")
 need(TOP_BAR[1][0] - 21.0 >= 0.5, f"front bridge top to the front pads: {TOP_BAR[1][0] - 21.0:.1f} mm (wires go up from there)")
 need(2 * BRIDGE_X - BRIDGE_LEG[0] >= 10.5, f"room for the battery strap between bridge legs: {2 * BRIDGE_X - BRIDGE_LEG[0]:.1f} mm (10 mm strap)")
+need(ESP_Z - TPS['hang'] - MPU_TOP >= 2.5, f"TPS63020 under the ESP32, above the MPU6050: {ESP_Z - TPS['hang'] - MPU_TOP:.1f} mm (want >= 2.5)")
+need(ESP_ROWS - TPS['x'] >= 2.0, f"TPS63020 to the ESP32's pin rows: {ESP_ROWS - TPS['x']:.1f} mm (room for solder joints)")
+need(TPS['y'][0] - C1_Y >= 1.0 or ESP_Z - TPS['hang'] - C1_TOP >= 1.0, f"TPS63020 clear of C1: {TPS['y'][0] - C1_Y:.1f} mm in front of it")
+need(TOP_BAR[1][0] - TPS['y'][1] >= 2.0 and TPS['y'][0] - TOP_BAR[-1][1] >= 2.0, f"TPS63020 clear of the bridge tops: {min(TOP_BAR[1][0] - TPS['y'][1], TPS['y'][0] - TOP_BAR[-1][1]):.1f} mm")
 need(MOTOR_L - (TUBE_H - SEAT_Z) >= 8, f"motor held over {TUBE_H - SEAT_Z:.0f} mm of its {MOTOR_L:.0f} mm")
 need(POST_H - T >= 2.0, f"room under the PCB for trimmed leads above the beams: {POST_H - T:.1f} mm (trim leads to 1.5 mm)")
 for ok, msg in checks:

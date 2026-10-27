@@ -14,6 +14,7 @@ Regenerate the STL with `pcb/.venv/Scripts/python frame/gen_frame.py`. It prints
 | Motors (8520) | Slide into the clip tubes from the top until they sit on the inner lip; the wires go out through the hole underneath and along the arm to the corner pads. The slit lets the tube grip. |
 | PCB | On four posts, 4 mm tall. M2 screws go straight into the 1.7 mm holes. |
 | ESP32 | Lies across the two bridges just outside the PCB's front and rear edges, 14 mm above the PCB. Hold it with foam tape or a rubber band. |
+| TPS63020 | On foam under the ESP32, between its pin rows, 3.7 mm above the MPU6050. |
 | Battery | Underneath, with a velcro strap (up to 10 mm wide) that goes under the battery and over the bottom crossbars of the two bridges. |
 
 ## Clearances it checks

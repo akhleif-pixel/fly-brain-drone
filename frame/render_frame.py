@@ -101,7 +101,6 @@ for sx in (1, -1):
         cube(t0, t1, c - 5, c + 5, 5.0, 23.5, metal)
 # MPU6050 on its header, TPS63020, C1
 cube(-10.6, 10.6, 1.3, 17.3, 7.5, 9.1, blue)
-cube(-10, 10, -14, -2, 5.5, 8.0, mat("tps", (0.35, 0.1, 0.45), 0.4))
 cylz(6.85, -18.5, 5.0, 17.0, 3.15, mat("cap", (0.1, 0.15, 0.4), 0.3))
 # ESP32 on the bridges (28.5 x 51 mm, measured from a photo): module and antenna at the front, two USB-C at the rear,
 # camera propped on the module looking forward
@@ -110,6 +109,10 @@ cube(-9, 9, 7.3, 32.8, 20.6, 21.4, black)
 cube(-7.9, 7.9, 8.0, 25.6, 21.4, 23.7, metal)
 for x in (-6.4, 4.7):
     cube(x - 4.5, x + 4.5, -26.0, -18.6, 20.6, 23.8, metal)
+# TPS63020 on foam under the ESP32
+cube(-9.35, 9.35, -13.5, 14.0, 18.0, 19.0, mat("foam", (0.85, 0.84, 0.8), 0.9))
+cube(-9.35, 9.35, -13.5, 14.0, 17.0, 18.0, mat("tps", (0.05, 0.05, 0.06), 0.4))
+cube(-2.5, 2.5, 6.0, 11.0, 14.0, 17.0, mat("ind", (0.35, 0.36, 0.38), 0.6))
 cube(-4.25, 4.25, 14, 15.2, 23.7, 32.2, black)
 cube(-4, 4, 15.2, 19, 24, 32, black)
 bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=3.4, depth=3.5, location=(0, 20.7, 28), rotation=(math.radians(90), 0, 0))

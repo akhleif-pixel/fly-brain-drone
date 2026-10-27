@@ -14,7 +14,7 @@ GPIO 48 drives the board's RGB LED.
 
 ```
 Battery (+) ──┬──► motor (+) ×4
-              ├──► TPS63020 VIN ──► VOUT 3.3 V ──► ESP32 3V3 pin ──► MPU6050 VCC
+              ├──► TPS63020 VIN ──► VOUT 3.3 V ──► ESP32 3V3 pin ──► board 3V3 pad ──► MPU6050 VCC
               └──► 100 µF capacitor (+)
 Battery (−) ──► common ground: MOSFET sources, TPS63020 GND, ESP32 GND, capacitor (−, striped side)
 ```
